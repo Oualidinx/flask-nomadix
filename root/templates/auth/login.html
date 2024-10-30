@@ -1,10 +1,100 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "layouts/base-fullscreen.html" %}
 
-</body>
-</html>
+{% block title %} Login {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="bg-light min-vh-100 d-flex flex-row align-items-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card-group d-block d-md-flex row">
+                    <div class="card col-md-5 p-4 mb-0">
+                        <div class="card-body">
+                            <h1>Se connecter</h1>
+                            <p class="text-medium-emphasis">Connecter à votre compte</p>
+                            <form method="post">
+                                {{ form.hidden_tag() }}
+                                {% with messages = get_flashed_messages(with_categories=true) %}
+                                    {% if messages %}
+                                        {% for category , message in messages %}
+                                            <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
+                                                <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                                    <div class="d-flex">
+                                                        <div class="toast-body">
+                                                            {{ message }}
+                                                        </div>
+                                                        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endwith %}
+                                <div class="input-group mb-3">
+
+                                    <div class="input-group has-validation mb-3">
+                                        <span class="input-group-text">
+                                          <svg class="icon">
+                                            <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
+                                          </svg>
+                                        </span>
+                                        {% if form.username.errors %}
+                                            {{ form.username(class="form-control form-control-md is-invalid", placeholder="Nom d'utilisateur") }}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.username.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.username(class="form-control form-control-md", placeholder="Nom d'utilisateur") }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="input-group mb-4">
+                                    <span class="input-group-text">
+                                      <svg class="icon">
+                                        <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
+                                      </svg>
+                                    </span>
+
+                                    {% if form.password.errors %}
+                                        {{ form.password(class="form-control form-control-md", placeholder="Mot de passe") }}
+
+                                        {% for error in form.password.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ form.password(class="form-control form-control-md", placeholder="Mot de passe") }}
+                                    {% endif %}
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        {{ form.submit(class="btn btn-primary px-4") }}
+                                        <!--<button class="btn btn-primary " type="button">Se connecter</button>-->
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/toasts.js') }}"></script>
+    <script>
+        $(document).ready(function (){
+            $('.toast').toast('show');
+        })
+    </script>
+{% endblock javascripts %}

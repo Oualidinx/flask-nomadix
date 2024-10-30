@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    
+    <title>    
+        Bienvenue - NOMADIX
+    </title>
+
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="theme-color" content="#ffffff">
+    
+    <!-- Vendors styles-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendors/simplebar/css/simplebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/vendors/simplebar.css') }}">
+    
+    <!-- Main styles for this application-->
+    <link href="{{ url_for('static', filename='assets/css/style.css') }}" rel="stylesheet">
+    
+    <!-- We use those styles to show code examples, you should remove them in your application.-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/prism.css') }}">
+    <link href="{{ url_for('static', filename='assets/css/examples.css') }}" rel="stylesheet">
+    
+    <!-- Specific Page CSS goes HERE  -->
+    {% block stylesheets %}{% endblock stylesheets %}
+
+  </head>
+  <body>
+
+    {% include 'includes/sidebar.html' %} 
+
+    <div class="wrapper d-flex flex-column min-vh-100 bg-light">
+
+      {% include 'includes/navigation.html' %}
+
+      {% block content %}{% endblock content %}
+    </div>
+
+    {% include 'includes/scripts.html' %} 
+
+    <!-- Specific Page JS goes HERE  -->
+    {% block javascripts %}{% endblock javascripts %}
+
+  </body>
+</html>

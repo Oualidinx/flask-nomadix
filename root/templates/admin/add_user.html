@@ -1,0 +1,139 @@
+{% extends "layouts/admin_home.html" %}
+{% block subtitle %}
+    Ajouter un utilisateur
+{% endblock subtitle %}
+
+{% block content %}
+        <div class="row">
+            <div class="col-md">
+                <div class="card">
+                    <div class="card-header"><strong>Nouvelle</strong> utilisateur</div>
+                        <div class="card-body">
+                            <form class="form-horizontal" method="post" enctype="multipart/form-data">
+                                {{ form.hidden_tag() }}
+                                {% with messages = get_flashed_messages(with_categories=true) %}
+                                    {% if messages %}
+                                        {% for category , message in messages %}
+                                            <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
+                                                <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                                    <div class="d-flex">
+                                                        <div class="toast-body">
+                                                            {{ message }}
+
+                                                        </div>
+                                                        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endwith %}
+                            <div class="form-group row w-50">
+                                {{ form.first_name.label(class='col-md-3 col-form-label') }}
+                                <div class="col-md-9">
+                                    {% if form.first_name.errors %}
+                                        {{ form.first_name(class="form-control is-invalid", placeholder="Nom") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.first_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.first_name(class="form-control", placeholder="Nom") }}
+                                    {% endif %}
+
+                                </div>
+                            </div>
+
+                             <div class="form-group row  mt-lg-3 w-50">
+                                {{ form.last_name.label(class='col-md-3 col-form-label') }}
+                                <div class="col-md-9">
+                                    {% if form.last_name.errors %}
+                                        {{ form.last_name(class="form-control is-invalid", placeholder="Prénom") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.last_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.last_name(class="form-control", placeholder="Prénom") }}
+                                    {% endif %}
+                                </div>
+                             </div>
+
+    {#                        <div class="form-group row mt-lg-3 w-50">#}
+    {##}
+    {#                            <div class="input-group col-md-9">#}
+    {#                                {{ form.username.label(class='col-md-3 col-form-label') }}#}
+    {#                                {% if form.username.errors %}#}
+    {#                                    {{ form.username(class="form-control is-invalid", placeholder="Nom d'utilisateur") }}#}
+    {#                                    <div class="invalid-feedback">#}
+    {#                                        {% for error in form.username.errors %}#}
+    {#                                            {{ error }}#}
+    {#                                        {% endfor %}#}
+    {#                                    </div>#}
+    {#                                {% else %}#}
+    {#                                    {{ form.username(class="form-control", placeholder="Nom d'utilisateur") }}#}
+    {#                                {% endif %}#}
+    {#                            <span class="input-group-append">#}
+    {#                                <a href="#" class="btn btn-info">générer un nom d'utilisateur</a>#}
+    {#                                </span>#}
+    {#                            </div>#}
+    {#                        </div>#}
+
+    {#                         <div class="form-group row mt-lg-3 w-50">#}
+    {##}
+    {#                            <div class="input-group col-md-9">#}
+    {#                                {{ form.password .label(class='col-md-3 col-form-label') }}#}
+    {#                                {% if form.password .errors %}#}
+    {#                                    {{ form.password (class="form-control is-invalid", placeholder="Mot de passe") }}#}
+    {#                                    <div class="invalid-feedback">#}
+    {#                                        {% for error in form.password .errors %}#}
+    {#                                            {{ error }}#}
+    {#                                        {% endfor %}#}
+    {#                                    </div>#}
+    {#                                {% else %}#}
+    {#                                    {{ form.password (class="form-control", placeholder="Mot de passe") }}#}
+    {#                                {% endif %}#}
+    {##}
+    {#                                 <a href="#" class="btn btn-info">générer mot de passe</a>#}
+    {#                            </div>#}
+    {#                        </div>#}
+                            <div class="form-group row mt-lg-3 w-50">
+
+                                <div class="input-group col-md-9">
+                                    {{ form.role.label(class='col-md-3 col-md-label') }}
+                                    {% if form.role.errors %}
+                                        {{ form.role(class="form-control is-invalid", placeholder="Rôle") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.role.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.role(class="form-control", placeholder="Rôle") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-footer mt-lg-4">
+                                {{ form.submit(class="btn btn-sm btn-success", onclick="generate_pdf()") }}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+    </div>
+{% endblock content %}
+{% block javascripts %}
+
+  <!-- Plugins and scripts required by this view-->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/toasts.js') }}"></script>
+    <script type="text/javascript">
+        $(document).ready(function (){
+            $('.toast').toast('show');
+        })
+    </script>
+
+{% endblock javascripts %}

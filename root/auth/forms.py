@@ -12,11 +12,13 @@ class LoginForm(FlaskForm):
     username = StringField('Nom d\'utilisateur: ', validators=[DataRequired()])
     password = PasswordField('Mot de passe: ', validators=[DataRequired()])
     submit = SubmitField('Se connecter')
-    def validate_email(self, username):
+    """def validate_username(self, username):
 
-        user = User.query.filter_by(username=username.data).first()
-        if not user:
-            raise ValidationError('Veuillez vérifier vos informations')
+        user = User.query.filter_by(username=username.data) \
+                            .filter_by(is_deleted=0) \
+                                .first()
+        if not user:"
+            raise ValidationError('Veuillez vérifier vos informations')"""
 
 
 

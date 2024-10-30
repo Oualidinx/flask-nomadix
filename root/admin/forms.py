@@ -7,17 +7,16 @@ from root.models import User
 import re
 name_regex = re.compile('^[a-zA-Z]+$')
 
+
 class RegistrationForm(FlaskForm):
     first_name = StringField('Nom: ', validators=[DataRequired('Champs obligatoire')])
     last_name = StringField('Prénom: ', validators=[DataRequired('Champs obligatoire')])
-    username = StringField('Email: ', validators=[DataRequired('Champs obligatoire')])
-    password = PasswordField('Mot de passe:', validators=[DataRequired('Champs obligatoire')])
-    role = SelectField('Role:', choices=[('master','Master'), ('financier', 'Financier'),
-                                         ('gestionnaire','Gestionnaire'),('commerçial','Commerçial')],
+    # username = StringField("Nom d'utilisateur: ", validators=[DataRequired('Champs obligatoire')])
+    # password = PasswordField('Mot de passe:', validators=[DataRequired('Champs obligatoire')])
+    role = SelectField('Rôle:', choices=[(None, 'Sélectionner un rôle'), ('master','Master'),
+                                         ('financier', 'Financier'),
+                                         ('gestionnaire','Gestionnaire'),('commercial','Commerçial')],
                        validators=[DataRequired()])
-    confirm_password = PasswordField('Confirmer Mot de passe:', validators=[DataRequired('Champs obligatoire'),
-                                                                            EqualTo('password',
-                                                                            message="Vérifier bien ce champs S.V.P")])
     submit = SubmitField('Créer le compte')
 
     def validate_first_name(self, first_name):
@@ -28,10 +27,15 @@ class RegistrationForm(FlaskForm):
         if name_regex.search(last_name.data) is None:
             raise ValidationError('Prénom Invalide')
 
-    def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
-        if user:
-            raise ValidationError('Ce nom est déjà utilisé')
+    # def validate_username(self, username):
+    #     user = User.query.filter_by(username=username.data).filter_by(is_deleted=False).first()
+    #     if user:
+    #         raise ValidationError('Ce nom est déjà utilisé')
+
+    def validate_role(self, role):
+        # user = User.query.filter_by(username=role.data).first()
+        if role.data == None:
+            raise ValidationError('rôle invalide')
 
 
 class UpdateInfoForm(FlaskForm):

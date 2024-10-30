@@ -1,19 +1,15 @@
-from flask import url_for, redirect, request, render_template, flash, session,current_app, jsonify
+from flask import url_for, redirect, request, render_template, flash, session
 from root.auth import auth_bp
 from root.models import User
-from flask_login import login_required, login_user, logout_user, current_user
+from flask_login import login_required, login_user, logout_user
 from root.auth.forms import LoginForm
-from werkzeug.security import check_password_hash, generate_password_hash
-from root import database, mail
-import json, os
+from werkzeug.security import check_password_hash
+from root import mail, login_manager
+import os
 
-@auth_bp.before_request
-def define():
-    session['title'] = "CEIL Bordj Bou Arreridj"
 
 def send_reset_email(user, url, subject):
     user_name = os.environ.get('MAIL_USERNAME')
-    print(user_name)
     if user.role!="master" and user.is_deleted==0:
         # msg.body = render_template('verify_email.html', url = url_for(url, token=user.get_token(), _external=True))
         mail.send(subject=subject,
@@ -39,6 +35,10 @@ def send_reset_email(user, url, subject):
                 '''
               )
 
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -56,15 +56,13 @@ def login():
                 if nex_page:
                     return redirect(nex_page)
                 if user.role == "master":
-                    return redirect(url_for('admin_bp.index'))
+                    return redirect(url_for('admin_bp.home'))
                 if user.role == "financier":
-                    return redirect(url_for('financial_bp.index'))
+                    return redirect(url_for('financial_bp.home'))
                 if user.role == "gestionnaire":
-                    return redirect(url_for('emp_bp.index'))
-                if user.role == "commerçial":
-                    return redirect(url_for('comm_bp.index'))
-
-                # return redirect(url_for('user_bp.index'))
+                    return redirect(url_for('emp_bp.home'))
+                # if user.role == "commercial":
+                return redirect(url_for('comm_bp.home'))
             else:
                 flash('Veuillez vérifier les informations', 'danger')
                 return render_template('auth/login.html', form=form)
@@ -80,52 +78,4 @@ def login():
 def logout():
     logout_user()
     session.clear()
-    return redirect(url_for('auth_bp.login'))
-
-
-@auth_bp.get('/request_token')
-@auth_bp.post('/request_token')
-def request_token():
-    form = RequestToken()
-    # if form.validate_on_submit():
-    if form.validate_on_submit():
-
-        user = User.query.filter_by(email=form.email.data).first()
-
-        send_reset_email(user, "auth_bp.reset_password", subject='Password Reset Request')
-        flash('Un message a été transmis à votre email. Si Vous n\'avez aucun compte, vous ne recevez rien', 'info')
-        return redirect(url_for('auth_bp.login'))
-    return render_template('request_token.html', form = form)
-
-
-@auth_bp.get("/reset_password/<string:token>")
-@auth_bp.post("/reset_password/<string:token>")
-def reset_password(token):
-    user = User.verify_reset_token(token)
-    if user is None:
-        flash('Il y a une erreur', 'warning')
-        return redirect(url_for('auth_bp.request_token'))
-    form = ResetPasswordForm()
-    if form.validate_on_submit():
-        user.password_hash = generate_password_hash(form.new_password.data, "SHA256")
-        database.session.add(user)
-        database.session.commit()
-        flash('Votre mot de passe a été changé avec succès', 'success')
-        return redirect(url_for('auth_bp.login'))
-    return render_template("reset_password.html", form=form)
-
-
-@auth_bp.get('/verify_email/<string:token>')
-def verify_email(token):
-    user = User.verify_reset_token(token)
-    if not user:
-        return render_template("404.html")
-    if user.is_verified:
-       return render_template("401.html")
-    user.is_verified = True
-    database.session.add(user)
-    database.session.commit()
-    flash('Email Validé vous pouvez connecter',"success")
-    if 'new_reg' in session:
-        del session['new_reg']
     return redirect(url_for('auth_bp.login'))
