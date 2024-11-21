@@ -1,60 +1,159 @@
-{% extends "layouts/base.html" %}
+{% extends "layouts/admin_home.html" %}
 
-
+{% block stylesheets %}
+{#	<!--<link rel="stylesheet" href="{{ url_for('static', filename='gridjs/dist/theme/mermaid.css') }}" type="text/css">-->#}
+{#    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />#}
+    <link rel="stylesheet" href="{{ url_for('static', filename='gridjs/theme/mermaid.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendors/@coreui/icons/css/free.min.css') }}">
+{% endblock %}
 {% block content %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category , message in messages %}
+                <div class="toast-container toast-container position-absolute p-3 bottom-0 start-0">
+                    <div class="toast align-items-center text-white bg-{{ category }}" role="alert"
+                         aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                {{ message }}
+                            </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 	<div class="card">
-              <div class="card-header"><i class="fa fa-align-justify"></i> Tous les utilisateurs</div>
-              <div class="card-body">
-                <table class="table table-responsive-sm">
-                  <thead>
-                    <tr>
-                      <th>Username</th>
-                      <th>Date registered</th>
-                      <th>Role</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Samppa Nori</td>
-                      <td>2012/01/01</td>
-                      <td>Member</td>
-                      <td><span class="badge badge-success">Active</span></td>
-                    </tr>
-                    <tr>
-                      <td>Estavan Lykos</td>
-                      <td>2012/02/01</td>
-                      <td>Staff</td>
-                      <td><span class="badge badge-danger">Banned</span></td>
-                    </tr>
-                    <tr>
-                      <td>Chetan Mohamed</td>
-                      <td>2012/02/01</td>
-                      <td>Admin</td>
-                      <td><span class="badge badge-secondary">Inactive</span></td>
-                    </tr>
-                    <tr>
-                      <td>Derick Maximinus</td>
-                      <td>2012/03/01</td>
-                      <td>Member</td>
-                      <td><span class="badge badge-warning">Pending</span></td>
-                    </tr>
-                    <tr>
-                      <td>Friderik Dávid</td>
-                      <td>2012/01/21</td>
-                      <td>Staff</td>
-                      <td><span class="badge badge-success">Active</span></td>
-                    </tr>
-                  </tbody>
-                </table>
-                <ul class="pagination">
-                  <li class="page-item"><a class="page-link" href="#">Prev</a></li>
-                  <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                  <li class="page-item"><a class="page-link" href="#">2</a></li>
-                  <li class="page-item"><a class="page-link" href="#">3</a></li>
-                  <li class="page-item"><a class="page-link" href="#">4</a></li>
-                  <li class="page-item"><a class="page-link" href="#">Next</a></li>
-                </ul>
-              </div>
-            </div>
+
+        <div class="card-header">
+            <i class="fa fa-align-justify"></i> Tous les utilisateurs
+        </div>
+        <div class="card-body">
+            <div id="table"></div>
+        </div>
+        <div class="row bg-danger">
+            <div class="col-lg">
+               <div class="modal fade" id="userContent" tabindex="-1" aria-labelledby="exampleUserContent" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleUserContent">Inforamtions détaillée</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body"></div></div></div></div></div></div></div>
+{% endblock %}
+{% block javascripts %}
+{#    <script src="https://cdn.jsdelivr.net/npm/gridjs@6.2.0/dist/gridjs.production.min.js"></script>#}
+    <script src="{{ url_for('static', filename='gridjs/dist/gridjs.production.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+    <script>
+        $(document).ready(function (){
+            $('.toast').toast('show');
+        })
+        function foo(component){
+            var user_id = component.dataset['id'];
+            // AJAX request
+            $.ajax({
+               url: '{{ url_for('admin_bp.get_user') }}',
+               type: 'POST',
+               data: JSON.stringify({user_id: user_id}),
+                dataType:"json",
+                contentType: "application/json; charset=utf-8",
+               success: function(response){
+                   // Add response in Modal body
+                   {#console.log(response.message)#}
+                   console.log(response.message)
+                   $('.modal-body').html(response.message);
+                   // Display Modal
+                   $('#userContent').modal('show');
+               }
+            });
+        }
+
+        new gridjs.Grid({
+            autoWidth:true,
+            fixedHeader:true,
+            style:{
+                table:{
+                    'width':"100%"
+                }
+            },
+            language:{
+                search: {
+                  placeholder: 'Recherche...',
+                },
+                sort: {
+                  sortAsc: 'Ordre croissant',
+                  sortDesc: 'Ordre décroissant',
+                },
+                pagination: {
+                  previous: 'Précédent',
+                  next: 'Suivant',
+                  navigate: (page, pages) => `Page ${page} of ${pages}`,
+                  page: (page) => `Page ${page}`,
+                  showing: 'Affichage..',
+                  of: 'de',
+                  to: 'à',
+                  results: 'résultats',
+                },
+                loading: 'Chargement...',
+                noRecordsFound: 'Aucun enregistrements',
+                error: 'Erreur pendant le chargement des données'},
+            columns: [
+                {#{ id: 'id', name: 'Num' },#}
+                { id: 'full_name', name: 'Nom complet' },
+                { id: 'username', name: 'Pseudonyme' },
+                { id: 'role', name: 'Poste occupé' },
+                { id:'actions', name:'Actions'}
+            ],
+            data: ()=>{
+                return new Promise(resolve => {
+                    setTimeout(()=>
+                        resolve([
+                {% if liste %}
+                    {% for user in liste %}
+                        {
+                              {#id: '{{ user["id"] }}',#}
+                              full_name :'{{ user["full_name"] }}',
+                              username :'{{ user['username'] }}',
+                            actions: gridjs.html(`<div class="btn-group">
+                                        <button id="user-info" class="btn btn-sm btn-outline-info"
+                                            data-id="{{ user['id'] }}" onclick="foo(this);" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Voir">
+                                            <i class="c-icon c-icon-2xl mt-5 mb-2 cil-user"></i></button>
+                                        {#<a role="button" class="btn btn-sm btn-outline-secondary"#}
+                                        {#    href="{{ url_for('admin_bp.edit_user',user_id=user['id']) }}"#}
+                                        {#    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">#}
+                                        {#    <i class="c-icon c-icon-2xl mt-5 mb-2 cil-pencil"></i></a>#}
+                                        <a role="button" class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer"
+                                            href="{{ url_for('admin_bp.delete',user_id=user['id']) }}">
+                                            <i class="c-icon c-icon-2xl mt-5 mb-2 cil-user-unfollow"></i>
+                                        </a>
+{#                                                {% if user['_session'][1]=="Activé" %}#}
+{#                                                    title="Bloquer l'accès"#}
+
+{#                                                {% else %}#}
+{#                                                    title="Débloquer l'accès"#}
+{#                                                    href="{{ url_for('admin_bp.enable_user',user_id=user['id']) }}">#}
+{#                                                    <i class="fa fa-user-unlock"></i>#}
+{#                                             {% endif %}#}
+                                  </div>`
+                            ),
+                            role :'{{ user['role'] }}'
+                        },
+                    {% endfor %}
+                {% endif %}
+            ]),1000
+                    )
+                })
+            },
+            search: {
+              selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4, 5].includes(cellIndex) ? cell : null,
+            },
+            sort: true,
+            pagination: true
+          }).render(document.getElementById('table'));
+    </script>
 {% endblock %}

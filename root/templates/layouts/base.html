@@ -28,21 +28,31 @@
     {% block stylesheets %}{% endblock stylesheets %}
 
   </head>
-  <body>
+      <body>
 
-    {% include 'includes/sidebar.html' %} 
+        {% include 'includes/sidebar.html' %}
 
-    <div class="wrapper d-flex flex-column min-vh-100 bg-light">
+        <div class="wrapper d-flex flex-column min-vh-100 bg-light">
 
-      {% include 'includes/navigation.html' %}
+          {% include 'includes/navigation.html' %}
 
-      {% block content %}{% endblock content %}
-    </div>
+          {% block content %}{% endblock content %}
+        </div>
 
-    {% include 'includes/scripts.html' %} 
+        {% include 'includes/scripts.html' %}
 
-    <!-- Specific Page JS goes HERE  -->
-    {% block javascripts %}{% endblock javascripts %}
+        <!-- Specific Page JS goes HERE  -->
 
-  </body>
+        <!-- Plugins and scripts required by this view-->
+        <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/toasts.js') }}"></script>
+        <script type="text/javascript">
+            $(document).ready(function (){
+                $('.toast').toast('show');
+            })
+        </script>
+        {% block javascripts %}{% endblock javascripts %}
+
+      </body>
 </html>

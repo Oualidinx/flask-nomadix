@@ -124,16 +124,3 @@
             </div>
     </div>
 {% endblock content %}
-{% block javascripts %}
-
-  <!-- Plugins and scripts required by this view-->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/toasts.js') }}"></script>
-    <script type="text/javascript">
-        $(document).ready(function (){
-            $('.toast').toast('show');
-        })
-    </script>
-
-{% endblock javascripts %}
