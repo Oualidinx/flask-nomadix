@@ -4,6 +4,8 @@
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mermaid.min.css') }}">
 {% endblock stylesheets %}
 
 
@@ -16,4 +18,9 @@
 
 
 <!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+	<script src="{{ url_for('static', filename='js/popper.min.js')}}"></script>
+	<script src="{{ url_for('static', filename='js/botstrap.min.js')}}"></script>
+
+{% endblock %}
 

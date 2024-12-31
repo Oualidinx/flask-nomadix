@@ -1,0 +1,229 @@
+{% extends "layouts/admin_home.html" %}
+{% block subtitle %}
+    Ajouter Bus
+{% endblock subtitle %}
+
+{% block content %}
+    <div class="container-lg mt-lg-5">
+        <div class="card">
+            <div class="card-header"><strong>Nouveau</strong> Bus</div>
+            <div class="card-body">
+                <form class="form-horizontal" method="post">
+                    {{ form.hidden_tag() }}
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category , message in messages %}
+                                <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
+                                    <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                        <div class="d-flex">
+                                            <div class="toast-body">
+                                                {{ message }}
+
+                                            </div>
+                                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <div class="row g-3">
+                        <div class="col-sm form-floating">
+                             {% if form.company.errors %}#}
+                                    {{ form.company(class="form-control is-invalid", placeholder="Nom de la société ..") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.company.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.company(class="form-control", placeholder="Nom de la société ..") }}
+                                {% endif %}
+                            {{ form.company.label(class='form-control-label') }}
+                        </div>
+                    </div>
+                    <div class="row mt-3 g-3">
+                        <div class="col-sm form-floating">
+                            {% if form.state.errors %}#}
+                                    {{ form.state(class="form-control is-invalid", placeholder="Wilaya") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.state.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.state(class="form-control", placeholder="Wilaya") }}
+                                {% endif %}
+                            {{ form.state.label(class='form-control-label') }}
+                        </div>
+                        <div class="col-sm form-floating">
+                            {% if form.capacity.errors %}#}
+                                    {{ form.capacity(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.capacity.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.capacity(class="form-control") }}
+                                {% endif %}
+                            {{ form.capacity.label(class='form-control-label') }}
+                        </div>
+                    </div>
+                    <div class="row mt-3 g-3">
+                        <div class="col-sm form-floating">
+                             {% if form.driver_full_name.errors %}#}
+                                    {{ form.driver_full_name(class="form-control is-invalid", placeholder="Nom du conducteur ..") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.driver_full_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.driver_full_name(class="form-control", placeholder="Nom du conducteur ..") }}
+                                {% endif %}
+                            {{ form.driver_full_name.label(class='form-control-label') }}
+                        </div>
+                        <div class="col-sm form-floating">
+                             {% if form.drivers_phone_number.errors %}#}
+                                    {{ form.drivers_phone_number(class="form-control is-invalid", placeholder="Numéro de téléphone du conducteur ..") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.drivers_phone_number.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.drivers_phone_number(class="form-control", placeholder="Numéro de téléphone du conducteur ..") }}
+                                {% endif %}
+                            {{ form.drivers_phone_number.label(class='form-control-label') }}
+                        </div>
+                    </div>
+                    <div class="card-footer mt-lg-4">
+                        {{ form.submit(class="btn btn-sm btn-success") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+{#        <div class="row">#}
+{#            <div class="col-md">#}
+{#                <div class="card">#}
+{#                    <div class="card-header"><strong>Nouveau</strong> Bus</div>#}
+{#                        <div class="card-body">#}
+{#                            <form class="form-horizontal" method="post" enctype="multipart/form-data">#}
+{#                                {{ form.hidden_tag() }}#}
+{#                                {% with messages = get_flashed_messages(with_categories=true) %}#}
+{#                                    {% if messages %}#}
+{#                                        {% for category , message in messages %}#}
+{#                                            <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">#}
+{#                                                <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">#}
+{#                                                    <div class="d-flex">#}
+{#                                                        <div class="toast-body">#}
+{#                                                            {{ message }}#}
+{##}
+{#                                                        </div>#}
+{#                                                        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>#}
+{#                                                    </div>#}
+{#                                                </div>#}
+{#                                            </div>#}
+{#                                        {% endfor %}#}
+{#                                    {% endif %}#}
+{#                                {% endwith %}#}
+{#                            <div class="form-group row w-50">#}
+{#                                {{ form.company.label(class='col-md-3 col-form-label') }}#}
+{#                                <div class="col-md-9">#}
+{#                                    {% if form.company.errors %}#}
+{#                                        {{ form.company(class="form-control is-invalid", placeholder="Nom de la société") }}#}
+{#                                        <div class="invalid-feedback">#}
+{#                                            {% for error in form.company.errors %}#}
+{#                                                {{ error }}#}
+{#                                            {% endfor %}#}
+{#                                        </div>#}
+{#                                    {% else %}#}
+{#                                        {{ form.company(class="form-control", placeholder="Nom de la société") }}#}
+{#                                    {% endif %}#}
+{##}
+{#                                </div>#}
+{#                            </div>#}
+{#                            <div class="form-group row  mt-lg-3 w-50">#}
+{#                                {{ form.driver_full_name.label(class='col-md-3 col-form-label') }}#}
+{#                                <div class="col-md-3">#}
+{#                                    {% if form.driver_full_name.errors %}#}
+{#                                        {{ form.driver_full_name(class="form-control is-invalid") }}#}
+{#                                        <div class="invalid-feedback">#}
+{#                                            {% for error in form.driver_full_name.errors %}#}
+{#                                                {{ error }}#}
+{#                                            {% endfor %}#}
+{#                                        </div>#}
+{#                                    {% else %}#}
+{#                                        {{ form.driver_full_name(class="form-control") }}#}
+{#                                    {% endif %}#}
+{#                                </div>#}
+{##}
+{#                                {{ form.driver_full_name.label(class='col-md-3 col-form-label') }}#}
+{#                                <div class="col-md-3">#}
+{##}
+{#                                    {% if form.drivers_phone_number.errors %}#}
+{#                                        {{ form.drivers_phone_number(class="form-control is-invalid") }}#}
+{#                                        <div class="invalid-feedback">#}
+{#                                            {% for error in form.drivers_phone_number.errors %}#}
+{#                                                {{ error }}#}
+{#                                            {% endfor %}#}
+{#                                        </div>#}
+{#                                    {% else %}#}
+{#                                        {{ form.drivers_phone_number(class="form-control") }}#}
+{#                                    {% endif %}#}
+{#                                </div>#}
+{#                            </div>#}
+{#                            <div class="form-group row  mt-lg-3 w-50">#}
+{#                                {{ form.capacity.label(class='col-md-3 col-form-label') }}#}
+{#                                <div class="col-md-9">#}
+{#                                    {% if form.capacity.errors %}#}
+{#                                        {{ form.capacity(class="form-control is-invalid") }}#}
+{#                                        <div class="invalid-feedback">#}
+{#                                            {% for error in form.capacity.errors %}#}
+{#                                                {{ error }}#}
+{#                                            {% endfor %}#}
+{#                                        </div>#}
+{#                                    {% else %}#}
+{#                                        {{ form.capacity(class="form-control") }}#}
+{#                                    {% endif %}#}
+{##}
+{#                                </div>#}
+{#                            </div>#}
+{#                            <div class="form-group row  mt-lg-3 w-50">#}
+{#                                {{ form.state.label(class='col-md-3 col-form-label') }}#}
+{#                                <div class="col-md-9">#}
+{#                                    {% if form.state.errors %}#}
+{#                                        {{ form.state(class="form-control is-invalid", placeholder="La ville") }}#}
+{#                                        <div class="invalid-feedback">#}
+{#                                            {% for error in form.state.errors %}#}
+{#                                                {{ error }}#}
+{#                                            {% endfor %}#}
+{#                                        </div>#}
+{#                                    {% else %}#}
+{#                                        {{ form.state(class="form-control", placeholder="La ville") }}#}
+{#                                    {% endif %}#}
+{##}
+{#                                </div>#}
+{#                            </div>#}
+{#                            <div class="card-footer mt-lg-4">#}
+{#                                {{ form.submit(class="btn btn-sm btn-success") }}#}
+{#                            </div>#}
+{#                            <div class="form-step">#}
+{##}
+{#                            </div>#}
+{#                        </form>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#    </div>#}
+{% endblock content %}
+{% block javascripts %}
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+{% endblock %}

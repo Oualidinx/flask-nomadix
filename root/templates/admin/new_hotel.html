@@ -1,0 +1,151 @@
+{% extends "layouts/admin_home.html" %}
+{% block subtitle %}
+    Ajouter un hôtel
+{% endblock subtitle %}
+
+{% block content %}
+        <div class="row">
+            <div class="col-md">
+                <div class="card">
+                    <div class="card-header"><strong>Nouveau</strong> Hotel</div>
+                        <div class="card-body">
+                            <form class="form-horizontal" method="post" enctype="multipart/form-data">
+                                {{ form.hidden_tag() }}
+                                {% with messages = get_flashed_messages(with_categories=true) %}
+                                    {% if messages %}
+                                        {% for category , message in messages %}
+                                            <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
+                                                <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                                    <div class="d-flex">
+                                                        <div class="toast-body">
+                                                            {{ message }}
+
+                                                        </div>
+                                                        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endwith %}
+                            <div class="form-group row w-50">
+                                {{ form.name.label(class='col-md-3 col-form-label') }}
+                                <div class="col-md-9">
+                                    {% if form.name.errors %}
+                                        {{ form.name(class="form-control is-invalid", placeholder="Etiquette") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.name(class="form-control", placeholder="Etiquette") }}
+                                    {% endif %}
+
+                                </div>
+                            </div>
+                            <div class="form-group row  mt-lg-3 w-50">
+                                {{ form.star_rating.label(class='col-md-3 col-form-label') }}
+                                <div class="col-md-9">
+                                    {% if form.star_rating.errors %}
+                                        {{ form.star_rating(class="form-control is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.star_rating.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.star_rating(class="form-control") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="form-group row  mt-lg-3 w-50">
+                                {{ form.phone_number.label(class='col-md-3 col-form-label') }}
+                                <div class="col-md-9">
+                                    {% if form.phone_number.errors %}
+                                        {{ form.phone_number(class="form-control is-invalid", placeholder="Numéro de téléphone") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.phone_number.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.phone_number(class="form-control", placeholder="Numéro de téléphone") }}
+                                    {% endif %}
+
+                                </div>
+                            </div>
+                            <div class="form-group row  mt-lg-3 w-50">
+                                {{ form.state.label(class='col-md-3 col-form-label') }}
+                                <div class="col-md-9">
+                                    {% if form.state.errors %}
+                                        {{ form.state(class="form-control is-invalid", placeholder="La ville") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.state.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.state(class="form-control", placeholder="La ville") }}
+                                    {% endif %}
+
+                                </div>
+                            </div>
+{#                            <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" style="display: block;" aria-modal="true">#}
+{#                                <div class="modal-dialog" role="document">#}
+{#                                    <div class="modal-content">#}
+{#                                        <div class="modal-header">#}
+{#                                            <h4 class="modal-title">Modal title</h4>#}
+{#                                            <button class="close" type="button" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>#}
+{#                                        </div>#}
+{#                                        <div class="modal-body">#}
+{#                                            <p> bodyOne fine…</p>#}
+{#                                        </div>#}
+{#                                        <div class="modal-footer">#}
+{#                                            <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>#}
+{#                                            <button class="btn btn-primary" type="button">Save changes</button>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                    <!-- /.modal-content-->#}
+{#                                </div>#}
+{#                              <!-- /.modal-dialog-->#}
+{#                            </div>#}
+
+{#                            <div class="form-group row mt-lg-3 w-50">#}
+{##}
+{#                                <div class="input-group col-md-9">#}
+{#                                    {{ form.role.label(class='col-md-3 col-md-label') }}#}
+{#                                    {% if form.role.errors %}#}
+{#                                        {{ form.role(class="form-control is-invalid", placeholder="Rôle") }}#}
+{#                                        <div class="invalid-feedback">#}
+{#                                            {% for error in form.role.errors %}#}
+{#                                                {{ error }}#}
+{#                                            {% endfor %}#}
+{#                                        </div>#}
+{#                                    {% else %}#}
+{#                                        {{ form.role(class="form-control", placeholder="Rôle") }}#}
+{#                                    {% endif %}#}
+{#                                </div>#}
+{#                            </div>#}
+                            <div class="card-footer mt-lg-4">
+                                {{ form.submit(class="btn btn-sm btn-success") }}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+    </div>
+{% endblock content %}
+{% block javascripts %}
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+    <script>
+        $(document).ready(function(){
+            $('.toast').toast('show');
+        })
+        function addContact(){
+            $('#myModal').modal('show');
+        }
+
+    </script>
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends "layouts/admin_home.html" %}
+
+{% block stylesheets %}
+{#	<!--<link rel="stylesheet" href="{{ url_for('static', filename='gridjs/dist/theme/mermaid.css') }}" type="text/css">-->#}
+{#    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />#}
+    <link rel="stylesheet" href="{{ url_for('static', filename='gridjs/theme/mermaid.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendors/@coreui/icons/css/free.min.css') }}">
+    <style>
+        .btn-pill{
+            border-radius: 50em;
+            width: 120px;
+        }
+    </style>
+
+{% endblock %}
+{% block content %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category , message in messages %}
+                <div class="toast-container toast-container position-absolute p-3 bottom-0 start-0">
+                    <div class="toast align-items-center text-white bg-{{ category }}" role="alert"
+                         aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                {{ message }}
+                            </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+	<div class="card">
+
+        <div class="card-header">
+            <i class="c-icon c-icon-2xl mt-5 mb-2 cil-list"></i> Tous les hotels
+        </div>
+        <div class="card-body">
+            <div class="position-relative" style="z-index: 3;">
+                <div class="position-absolute top-0 end-0">
+                    <a role="button" href="{{ url_for('admin_bp.add_hotel') }}" class="btn btn-pill btn-outline-dark"><i class="c-icon c-icon-2xl mt-5 mb-2 cil-plus"></i> Nouveau</a>
+                </div>
+            </div>
+            <div id="table"></div>
+        </div>
+        <div class="row bg-danger">
+            <div class="col-lg">
+               <div class="modal fade" id="userContent" tabindex="-1" aria-labelledby="exampleUserContent" aria-hidden="true">
+                  <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleUserContent">Inforamtions détaillée</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body"></div></div></div></div></div></div>
+    </div>
+{% endblock %}
+{% block javascripts %}
+{#    <script src="https://cdn.jsdelivr.net/npm/gridjs@6.2.0/dist/gridjs.production.min.js"></script>#}
+    <script src="{{ url_for('static', filename='gridjs/dist/gridjs.production.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/toasts.js') }}"></script>
+    <script>
+        $(document).ready(function (){
+            $('.toast').toast('show');
+        })
+        function foo(component){
+            var hotel_id = component.dataset['id'];
+            // AJAX request
+            $.ajax({
+               url: '{{ url_for('admin_bp.get_hotel') }}',
+               type: 'POST',
+               data: JSON.stringify({hotel_id: hotel_id}),
+                dataType:"json",
+                contentType: "application/json; charset=utf-8",
+               success: function(response){
+                   // Add response in Modal body
+                   $('.modal-body').html(response.message);
+                   // Display Modal
+                   $('#userContent').modal('show');
+               }
+            });
+        }
+
+        new gridjs.Grid({
+            autoWidth:true,
+            fixedHeader:true,
+            style:{
+                table:{
+                    'width':"100%"
+                }
+            },
+            language:{
+                search: {
+                  placeholder: 'Recherche...',
+                },
+                sort: {
+                  sortAsc: 'Ordre croissant',
+                  sortDesc: 'Ordre décroissant',
+                },
+                pagination: {
+                  previous: 'Précédent',
+                  next: 'Suivant',
+                  navigate: (page, pages) => `Page ${page} of ${pages}`,
+                  page: (page) => `Page ${page}`,
+                  showing: 'Affichage..',
+                  of: 'de',
+                  to: 'à',
+                  results: 'résultats',
+                },
+                loading: 'Chargement...',
+                noRecordsFound: 'Aucun enregistrements',
+                error: 'Erreur pendant le chargement des données'},
+            columns: [
+                {#{ id: 'id', name: 'Num' },#}
+                { id: 'name', name: 'Nom du guide' },
+                { id: 'star_rating', name: 'Classment par étoiles' },
+                { id: 'nbvoyages', name: 'Nombre de voyages' },
+                { id:'actions', name:'Actions'}
+            ],
+            data: ()=>{
+                return new Promise(resolve => {
+                    setTimeout(()=>
+                        resolve([
+                {% if liste %}
+                    {% for b in liste %}
+                        {
+                            {#id: '{{ user["id"] }}',#}
+                            name :'{{ b["name"] }}',
+                            star_rating :'{{ b['star_rating'] }}',
+                            nbvoyages :'{{ b['#voyages'] }}',
+                            actions: gridjs.html(`<div class="btn-group">
+                                        <button id="user-info" class="btn btn-sm btn-outline-info"
+                                            data-id="{{ b['id'] }}" onclick="foo(this);" data-bs-toggle="tooltip"
+                                            data-bs-placement="bottom" title="Voir">
+                                            <i class="c-icon c-icon-2xl mt-5 mb-2 cil-user"></i></button>
+                                        {#<a role="button" class="btn btn-sm btn-outline-secondary"#}
+                                        {#    href="{{ url_for('admin_bp.edit_user',user_id=user['id']) }}"#}
+                                        {#    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">#}
+                                        {#    <i class="c-icon c-icon-2xl mt-5 mb-2 cil-pencil"></i></a>#}
+                                        <a role="button" class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer"
+                                            href="{{ url_for('admin_bp.delete_hotel',hotel_id=b['id']) }}">
+                                            <i class="c-icon c-icon-2xl mt-5 mb-2 cil-user-unfollow"></i>
+                                        </a>
+{#                                                {% if user['_session'][1]=="Activé" %}#}
+{#                                                    title="Bloquer l'accès"#}
+
+{#                                                {% else %}#}
+{#                                                    title="Débloquer l'accès"#}
+{#                                                    href="{{ url_for('admin_bp.enable_user',user_id=user['id']) }}">#}
+{#                                                    <i class="fa fa-user-unlock"></i>#}
+{#                                             {% endif %}#}
+                                  </div>`
+                            )
+                        },
+                    {% endfor %}
+                {% endif %}
+            ]),1000
+                    )
+                })
+            },
+            search: {
+              selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4, 5].includes(cellIndex) ? cell : null,
+            },
+            sort: true,
+            pagination: true
+          }).render(document.getElementById('table'));
+    </script>
+{% endblock %}

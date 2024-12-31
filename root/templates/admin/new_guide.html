@@ -1,0 +1,117 @@
+{% extends "layouts/admin_home.html" %}
+{% block subtitle %}
+    Ajouter Guide
+{% endblock subtitle %}
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/select2.min.css') }}">
+{% endblock %}
+{% block content %}
+    <div class="container-lg mt-lg-5">
+        <div class="card">
+            <div class="card-header"><strong>Nouveau</strong> Guide</div>
+            <div class="card-body">
+                <form class="form-horizontal" method="post">
+                    {{ form.hidden_tag() }}
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category , message in messages %}
+                                <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
+                                    <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                        <div class="d-flex">
+                                            <div class="toast-body">
+                                                {{ message }}
+
+                                            </div>
+                                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <div class="row g-3">
+                        <div class="col-sm form-floating">
+                             {% if form.full_name.errors %}
+                                    {{ form.full_name(class="form-control is-invalid", placeholder="Nom complet ..") }}
+                                    <div class="invalid-tooltip">
+                                        {% for error in form.full_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.full_name(class="form-control", placeholder="Nom complet ..") }}
+                                {% endif %}
+                            {{ form.full_name.label(class='form-control-label') }}
+                        </div>
+                        <div class="col-sm form-floating">
+{#                            <input class="form-control" id="floatingInputValue" type="email" placeholder="name@example.com">#}
+{#                            <label for="floatingInputValue">Input with value</label>#}
+                            {% if form.guide_phone_number.errors %}
+                                {{ form.guide_phone_number(class="form-control is-invalid", placeholder="Numéro de téléphone ..") }}
+                                <div class="invalid-tooltip">
+                                    {% for error in form.guide_phone_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                    {{ form.guide_phone_number(class="form-control", placeholder="Numéro de téléphone ..") }}
+                                {% endif %}
+                                {{ form.guide_phone_number.label(class='col-form-label') }}
+                        </div>
+                    </div>
+                    <div class="row mt-3 g-3">
+                        <div class="col-sm form-group">
+                            {{ form.sex.label(class='form-control-label') }}
+                            {% if form.sex.errors %}
+                                {{ form.sex(class="form-control is-invalid") }}
+                                <div class="invalid-tooltip">
+                                    {% for error in form.sex.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.sex(class="form-control") }}
+                            {% endif %}
+
+                        </div>
+                        <div class="col-sm form-group">
+                            {{ form.state.label(class='form-control-label') }}
+                            {% if form.state.errors %}
+                                {{ form.state(class="form-select is-invalid") }}
+                                <div class="invalid-tooltip">
+                                    {% for error in form.sex.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.state(class="form-select") }}
+                            {% endif %}
+
+                        </div>
+                    </div>
+                    <div class="card-footer mt-lg-4">
+                        {{ form.submit(class="btn btn-sm btn-success") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block javascripts %}
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+    <script>
+        $(document).ready(function(){
+            $('.toast').toast('show');
+            $('#sex').select2({
+                placeholder:"Sélectionner le genre"
+            });
+            $('#state').select2({
+                placeholder: "Séléctionner la Wilaya ..."
+            });
+        })
+        function addContact(){
+            $('#myModal').modal('show');
+        }
+
+    </script>
+{% endblock %}

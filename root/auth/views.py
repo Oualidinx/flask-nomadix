@@ -56,15 +56,15 @@ def login():
                 if nex_page:
                     return redirect(nex_page)
                 if user.role == "master":
-                    return redirect(url_for('admin_bp.home'))
+                    return redirect(url_for('admin_bp.index'))
                 if user.role == "financier":
-                    return redirect(url_for('financial_bp.home'))
+                    return redirect(url_for('financial_bp.index'))
                 if user.role == "gestionnaire":
-                    return redirect(url_for('emp_bp.home'))
+                    return redirect(url_for('emp_bp.index'))
                 # if user.role == "commercial":
-                return redirect(url_for('comm_bp.home'))
+                return redirect(url_for('comm_bp.index'))
             else:
-                flash('Veuillez vérifier les informations', 'danger')
+                flash('Veuillez vérifier les  informations', 'danger')
                 return render_template('auth/login.html', form=form)
 
         else:

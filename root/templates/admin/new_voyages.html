@@ -1,0 +1,441 @@
+{% extends "layouts/admin_home.html" %}
+{% block subtitle %}
+    Ajouter Voyage
+{% endblock subtitle %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/select2.min.css') }}">
+	<style>
+        #container {
+          max-width: 550px;
+        }
+
+        .step-container {
+          position: relative;
+          text-align: center;
+          transform: translateY(-43%);
+        }
+
+        .step-circle {
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          background-color: #fff;
+          border: 2px solid #007bff;
+          line-height: 30px;
+          font-weight: bold;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 10px;
+          cursor: pointer; /* Added cursor pointer */
+        }
+
+        .step-line {
+          position: absolute;
+          top: 16px;
+          left: 50px;
+          width: calc(100% - 100px);
+          height: 2px;
+          background-color: #007bff;
+          z-index: -1;
+        }
+
+        #multi-step-form{
+          overflow-x: hidden;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container-lg mt-lg-5">
+        <div class="card">
+            <div class="card-header"><strong>Nouveau</strong> Voyage</div>
+            <div class="card-body">
+                <div id="container" class="container mt-5">
+                    <div class="progress px-1" style="height: 3px;">
+                        <div class="progress-bar" role="progressbar" style="width: 0;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="step-container d-flex justify-content-between">
+                        <div class="step-circle" onclick="displayStep(1)">1</div>
+                        <div class="step-circle" onclick="displayStep(2)">2</div>
+                        <div class="step-circle" onclick="displayStep(3)">3</div>
+                        <div class="step-circle" onclick="displayStep(4)">4</div>
+                        <div class="step-circle" onclick="displayStep(5)">5</div>
+                    </div>
+                    <form class="form-horizontal" method="post" id="multi-step-form">
+                        {{ form.hidden_tag() }}
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category , message in messages %}
+                                    <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
+                                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                            <div class="d-flex">
+                                                <div class="toast-body">
+                                                    {{ message }}
+                                                </div>
+                                                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        <div class="step step-1">
+                            <!-- Step 1 form fields here -->
+                            <h3 class="h3 mb-5">Information sur le voyage</h3>
+                            <div class="mb-3">
+                                <div class="row g-3">
+                                    <div class="col-sm form-floating">
+                                        {% if form.destination.errors %}
+                                        {{ form.destination(class="form-control is-invalid", placeholder="Nom complet ..") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.destination.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.destination(class="form-control", placeholder="Nom complet ..") }}
+                                    {% endif %}
+                                    {{ form.destination.label(class='form-control-label') }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="row g-3">
+                                    <div class="col-sm form-floating">
+                                        {% if form.date_depart.errors %}
+                                        {{ form.date_depart(class="form-control is-invalid", placeholder="Nom complet ..") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.date_depart.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.date_depart(class="form-control", placeholder="Nom complet ..") }}
+                                    {% endif %}
+                                    {{ form.date_depart.label(class='form-control-label') }}
+                                    </div>
+                                    <div class="col-sm form-floating">
+                                        {% if form.date_end.errors %}
+                                            {{ form.date_end(class="form-control is-invalid", placeholder="Nom complet ..") }}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.date_end.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.date_end(class="form-control", placeholder="Nom complet ..") }}
+                                        {% endif %}
+                                        {{ form.date_end.label(class='form-control-label') }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="row g-3">
+                                    <div class="col-sm form-floating">
+                                        {% if form.subscription_due_date.errors %}
+                                            {{ form.subscription_due_date(class="form-control is-invalid", placeholder="Nom complet ..") }}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.subscription_due_date.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.subscription_due_date(class="form-control", placeholder="Nom complet ..") }}
+                                        {% endif %}
+                                        {{ form.subscription_due_date.label(class='form-control-label') }}
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary next-step">Next</button>
+                        </div>
+                        <div class="step step-2">
+                            <!-- Step 2 form fields here -->
+                            <h3 class="h3">Hôtel</h3>
+                            <div class="mb-3 mt-5">
+                                <div class="row">
+
+                                    <div class="col-sm form-check-primary form-switch">
+                                        {{ form.is_hotel_included.label(class="form-check-label") }}
+                                        {{ form.is_hotel_included(class="form-check-input", style="margin-left: 2.5em;") }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3 invisible" id="hid-form">
+                                <div class="row g-3 mb-3">
+
+                                    <div class="col-md form-group g-3">
+                                        {{ form.hotel.label(class="form-control-label") }}
+                                        {% if form.hotel.errors %}
+                                            {{ form.hotel(class="form-select", placeholder="Choisir l'hôtel") }}
+                                            <div class="invalid-tooltip">
+                                                {% for error in form.hotel.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.hotel(class="form-select", placeholder="Choisir l'hôtel") }}
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md form-floating">
+                                        {% if form.hotel_fees.errors %}
+                                            {{ form.hotel_fees(class="form-control") }}
+                                        	<div class="invalid-tooltip">
+                                                {% for error in form.hotel_fees.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.hotel_fees(class="form-control") }}
+                                        {% endif %}
+                                        {{ form.hotel_fees.label(class="form-control-label") }}
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary prev-step">Previous</button>
+                            <button type="button" class="btn btn-primary next-step">Next</button>
+                        </div>
+
+                        <div class="step step-3">
+                            <!-- Step 3 form fields here -->
+                            <h3>Bus</h3>
+                            <div class="mb-3 mt-5">
+                                <div class="row">
+
+                                    <div class="col-sm form-check-primary form-switch">
+                                        {{ form.is_bus_included.label(class="form-check-label") }}
+                                        {{ form.is_bus_included(class="form-check-input", style="margin-left: 2.5em;") }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3 invisible" id="bid-form">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md form-group">
+                                        {{ form.bus_company.label(class="form-control-label") }}
+                                        {% if form.bus_company.errors %}
+                                            {{ form.bus_company(class="form-select") }}
+                                            <div class="invalid-tooltip">
+                                                {% for error in form.bus_company.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.bus_company(class="form-select") }}
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md form-group">
+                                        {{ form.bus_fees.label(class="form-control-label") }}
+                                        {% if form.bus_fees.errors %}
+                                            {{ form.bus_fees(class="form-control") }}
+                                        	<div class="invalid-tooltip">
+                                                {% for error in form.bus_fees.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.bus_fees(class="form-control") }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary prev-step">Previous</button>
+                            <button type="button" class="btn btn-primary next-step">Next</button>
+                        </div>
+                        <div class="step step-4">
+                            <!-- Step 3 form fields here -->
+                            <h3>Guide</h3>
+                            <div class="mb-3 mt-5">
+                                <div class="row">
+
+                                    <div class="col-sm form-check-primary form-switch">
+                                        {{ form.is_guide_included.label(class="form-check-label") }}
+                                        {{ form.is_guide_included(class="form-check-input", style="margin-left: 2.5em;") }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3 invisible" id="gid-form">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md form-group">
+                                        {{ form.guides.label(class="form-control-label") }}
+                                        {% if form.guides.errors %}
+                                            {{ form.guides(class="form-select") }}
+                                            <div class="invalid-tooltip">
+                                                {% for error in form.guides.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.guides(class="form-select") }}
+                                        {% endif %}
+
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md form-floating">
+                                        {% if form.guide_fees.errors %}
+                                            {{ form.guide_fees(class="form-control") }}
+                                        	<div class="invalid-tooltip">
+                                                {% for error in form.guide_fees.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.guide_fees(class="form-control") }}
+                                        {% endif %}
+                                        {{ form.guide_fees.label(class="form-control-label") }}
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary prev-step">Previous</button>
+                            <button type="button" class="btn btn-primary next-step">Next</button>
+                        </div>
+                        <div class="step step-5">
+                            <!-- Step 3 form fields here -->
+                            <h3>Vol</h3>
+                            <div class="mb-3 mt-5">
+                                <div class="row">
+                                    <div class="col-sm form-check-primary form-switch">
+                                        {{ form.is_plane_included.label(class="form-check-label") }}
+                                        {{ form.is_plane_included(class="form-check-input", style="margin-left: 2.5em;") }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="pid-form" class="mb-3 invisible">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md form-floating">
+                                        {% if form.avion_fees.errors %}
+                                            {{ form.avion_fees(class="form-control") }}
+                                            <div class="invalid-tooltip">
+                                                {% for error in form.avion_fees.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.avion_fees(class="form-control") }}
+                                        {% endif %}
+                                        {{ form.avion_fees.label(class="form-control-label") }}
+                                    </div>
+                                </div>
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md form-floating">
+                                        {% if form.visa_fees.errors %}
+                                            {{ form.visa_fees(class="form-control") }}
+                                            <div class="invalid-tooltip">
+                                                {% for error in form.visa_fees.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.visa_fees(class="form-control") }}
+                                        {% endif %}
+                                        {{ form.visa_fees.label(class="form-control-label") }}
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary prev-step">Previous</button>
+                            {{ form.submit(class="btn btn-success") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block javascripts %}
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+    <script>
+        var currentStep = 1;
+        var updateProgressBar;
+        $(document).ready(function(){
+            $('.toast').toast('show');
+            $('#multi-step-form').find('.step').slice(1).hide();
+            $('.form-select').select2({
+                {#width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style'#}
+                width: "100%"
+            });
+            $('#is_hotel_included').on("change", function(){
+
+                if($("#hid-form").attr("class") === "mb-3 visible"){
+                    $("#hid-form").removeClass("mb-3 visible").addClass("mb-3 invisible");
+
+                }else{
+                    $("#hid-form").removeClass("mb-3 invisible").addClass("mb-3 visible");
+                }
+            });
+
+            $('#is_bus_included').on("change", function(){
+
+                if($("#bid-form").attr("class") === "mb-3 visible"){
+                    $("#bid-form").removeClass("mb-3 visible").addClass("mb-3 invisible");
+
+                }else{
+                    $("#bid-form").removeClass("mb-3 invisible").addClass("mb-3 visible");
+                }
+            });
+
+            $('#is_guide_included').on("change", function(){
+
+                if($("#gid-form").attr("class") === "mb-3 visible"){
+                    $("#gid-form").removeClass("mb-3 visible").addClass("mb-3 invisible");
+
+                }else{
+                    $("#gid-form").removeClass("mb-3 invisible").addClass("mb-3 visible");
+                }
+            });
+
+            $('#is_plane_included').on("change", function(){
+
+                if($("#pid-form").attr("class") === "mb-3 visible"){
+                    $("#pid-form").removeClass("mb-3 visible").addClass("mb-3 invisible");
+
+                }else{
+                    $("#pid-form").removeClass("mb-3 invisible").addClass("mb-3 visible");
+                }
+            });
+            $(".next-step").click(function() {
+                if (currentStep < 5) {
+                    $(".step-" + currentStep).addClass("animate__animated animate__fadeOutLeft");
+                    currentStep++;
+                    setTimeout(function() {
+                        $(".step").removeClass("animate__animated animate__fadeOutLeft").hide();
+                        $(".step-" + currentStep).show().addClass("animate__animated animate__fadeInRight");
+                        updateProgressBar();
+                        }, 250);
+                }
+            });
+            $(".prev-step").click(function() {
+                if (currentStep > 1) {
+                    $(".step-" + currentStep).addClass("animate__animated animate__fadeOutRight");
+                    currentStep--;
+                    setTimeout(function() {
+                        $(".step").removeClass("animate__animated animate__fadeOutRight").hide();
+                        $(".step-" + currentStep).show().addClass("animate__animated animate__fadeInLeft");
+                        updateProgressBar();
+                    }, 250);
+                }
+            });
+            updateProgressBar = function() {
+                var progressPercentage = ((currentStep - 1) / 4) * 100;
+                $(".progress-bar").css("width", progressPercentage + "%");
+            }
+        });
+        function addContact(){
+            $('#myModal').modal('show');
+        }
+
+        function displayStep(stepNumber) {
+            if (stepNumber >= 1 && stepNumber <= 5) {
+                $(".step-" + currentStep).hide();
+                $(".step-" + stepNumber).show();
+                currentStep = stepNumber;
+                updateProgressBar();
+            }
+        }
+    </script>
+{% endblock %}
