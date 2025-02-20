@@ -533,7 +533,9 @@ def subscription(voyage_id):
                 'last_name': "",
                 "sexe":""
             })
-            return render_template('admin/subscription.html', form=form, nested=PersonForm())
+            return render_template('admin/subscription.html',
+                                   form=form,
+                                   nested=PersonForm())
         database.session.add(agency)
         database.session.commit()
         v_for_a = VoyageForAgency()

@@ -208,7 +208,7 @@ class VoyagesForm(FlaskForm):
 class PersonForm(Form):
     first_name = StringField('Nom', validators=[DataRequired()])
     last_name = StringField('Prénom', validators=[DataRequired()])
-    sexe = SelectField('Genre:', choices=[('m', 'Male'), ("f", "femelle")], validators=[DataRequired()])
+    sexe = SelectField('Genre', choices=[('m', 'Male'), ("f", "femelle")], validators=[DataRequired()])
     phone_number = StringField('Numéro de téléphone')
     delete_entry = SubmitField('Supprimer')
 
@@ -232,7 +232,7 @@ class Subscription(FlaskForm):
     reserved_places = IntegerField('Nombres de places: ', validators=[DataRequired(), NumberRange(min=1)])
     phone_number = StringField('Numéro de téléphone: ', validators=[DataRequired('Champs obligatoire')])
     persons = FieldList(FormField(PersonForm), min_entries=1)
-    add = SubmitField('+')
+    add = SubmitField('add new line')
     fin = SubmitField('Enregistrer')
     submit = SubmitField('Valider')
 

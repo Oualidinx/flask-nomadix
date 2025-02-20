@@ -1,6 +1,6 @@
 {% extends "layouts/admin_home.html" %}
 {% block subtitle %}
-    Ajouter Voyage
+    Ajouter Souscription
 {% endblock subtitle %}
 {% block stylesheets %}
 
@@ -8,8 +8,196 @@
 {% block content %}
     <div class="container-lg mt-lg-5">
         <div class="card">
-            <div class="card-header"><strong>Nouveau</strong> Guide</div>
+            <div class="card-header"><strong>Nouveau</strong> Souscription</div>
             <div class="card-body">
+                <form class="form-horizontal" method="post">
+                    {{ form.hidden_tag() }}
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category , message in messages %}
+                                <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
+                                    <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                        <div class="d-flex">
+                                            <div class="toast-body">
+                                                {{ message }}
+
+                                            </div>
+                                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <div class="p-2">
+                        <div class="card">
+                            <div class="card-header">
+                                Informations sur le responsable de groupe/agence demandant le voyage
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3 m-2">
+                                    <div class="col-sm form-floating">
+                                         {% if form.label.errors %}
+                                                {{ form.label(class="form-control is-invalid", placeholder="Titre") }}
+                                                <div class="invalid-tooltip">
+                                                    {% for error in form.label.errors %}
+                                                        {{ error }}
+                                                    {% endfor %}
+                                                </div>
+                                            {% else %}
+                                                {{ form.label(class="form-control", placeholder="Titre") }}
+                                            {% endif %}
+                                        {{ form.label.label(class='form-control-label') }}
+                                    </div>
+                                    <div class="col-sm form-floating">
+                                        {% if form.reserved_places.errors %}
+                                            {{ form.reserved_places(class="form-control is-invalid", placeholder="Nombre de places") }}
+                                            <div class="invalid-tooltip">
+                                                {% for error in form.reserved_places.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.reserved_places(class="form-control", placeholder="Nombre de places") }}
+                                        {% endif %}
+                                        {{ form.reserved_places.label(class='form-control-label') }}
+                                    </div>
+                                </div>
+                                <div class="row g-3 m-2">
+                                    <div class="col-sm form-floating">
+                                        {% if form.responsible_full_name.errors %}
+                                            {{ form.responsible_full_name(class="form-control is-invalid", placeholder="Nom complet ..") }}
+                                            <div class="invalid-tooltip">
+                                                {% for error in form.responsible_full_name.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.responsible_full_name(class="form-control", placeholder="Nom complet ..") }}
+                                        {% endif %}
+                                        {{ form.responsible_full_name.label(class='form-control-label') }}
+                                    </div>
+                                    <div class="col-sm form-floating">
+                                        {% if form.phone_number.errors %}
+                                            {{ form.phone_number(class="form-control is-invalid", placeholder="Numéro de téléphone") }}
+                                            <div class="invalid-tooltip">
+                                                {% for error in form.phone_number.errors %}
+                                                    {{ error }}
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ form.phone_number(class="form-control", placeholder="Numéro de téléphone") }}
+                                        {% endif %}
+                                        {{ form.phone_number.label(class='form-control-label') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-2">
+                        <div class="card">
+                            <div class="card-header">
+                                Informations sur les individus de groupe/agence
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-5 mb-lg-3 text-center">
+                                    <div class="col-md">
+                                        {{ nested.first_name.label }}
+                                    </div>
+                                    <div class="col-md">
+                                        {{ nested.last_name.label }}
+                                    </div>
+                                    <div class="col-md">
+                                        {{ nested.sexe.label }}
+                                    </div>
+                                    <div class="col-md">
+                                        {{ nested.phone_number.label }}
+                                    </div>
+                                    <div class="col-md">
+                                        Actions
+                                    </div>
+                                </div>
+                                {#      Table Rows      #}
+                                {% for entry in form.persons %}
+                                    <div class="row mb-sm-4">
+                                        <div class="col-md">
+                                            {% if entry.first_name.errors %}
+                                                <div class="input-group has-validation">
+                                                    {{ entry.first_name(class="form-control form-control-sm is-invalid") }}
+                                                    {% for error in entry.first_name.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {{ error }}
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% else %}
+                                                {{ entry.first_name(class="form-control form-control-sm") }}
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md">
+                                            <div class="input-group input-group-sm has-validation">
+                                                {% if entry.last_name.errors %}
+                                                    {{ entry.last_name(class="form-control form-control-sm is-invalid") }}
+                                                    {% for error in entry.last_name.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {{ error }}
+                                                        </div>
+                                                    {% endfor %}
+
+                                                {% else %}
+                                                    {{ entry.last_name(class="form-control form-control-sm") }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md">
+                                            <div class="input-group has-validation">
+                                                {% if entry.sexe.errors %}
+
+                                                    {{ entry.sexe(class="form-select form-select-sm is-invalid") }}
+                                                    {% for error in entry.sexe.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {{ error }}
+                                                        </div>
+                                                    {% endfor %}
+
+                                                {% else %}
+                                                    {{ entry.sexe(class="form-select form-select-sm") }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md">
+                                            <div class="input-group input-group-sm has-validation">
+                                                {% if entry.phone_number.errors %}
+                                                    {{ entry.phone_number(class="form-control form-control-sm is-invalid") }}
+                                                    {% for error in entry.amount.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {{ error }}
+                                                        </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    {{ entry.phone_number(class="form-control form-control-sm") }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md text-center">
+                                            {{ entry.delete_entry(class='btn btn-sm btn-outline-danger') }}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                                <div class="row justify-content-end mb-4">
+                                    <div class="col-sm">
+                                        {{ form.add(class='btn btn-sm btn-info rounded-pill') }}
+                                        {{ form.fin(class='btn btn-sm btn-success rounded-pill') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer" align="right">
+                        {{ form.submit(class="btn btn-pill rounded-pill  btn-primary text-right ") }}
+                    </div>
+                </form>
             </div>
         </div>
     </div>
