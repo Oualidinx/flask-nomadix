@@ -1,0 +1,146 @@
+{% extends "layouts/admin_home.html" %}
+
+{% block stylesheets %}
+{#	<!--<link rel="stylesheet" href="{{ url_for('static', filename='gridjs/dist/theme/mermaid.css') }}" type="text/css">-->#}
+{#    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />#}
+    <link rel="stylesheet" href="{{ url_for('static', filename='gridjs/theme/mermaid.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendors/@coreui/icons/css/free.min.css') }}">
+{% endblock %}
+{% block content %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category , message in messages %}
+                <div class="toast-container toast-container position-absolute p-3 bottom-0 start-0">
+                    <div class="toast align-items-center text-white bg-{{ category }}" role="alert"
+                         aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                {{ message }}
+                            </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <div class="card">
+         <div class="card-header">
+            <i class="fa fa-align-justify"></i> Tous les transactions financiers
+         </div>
+        <div class="card-body">
+            <div class="position-relative" style="z-index: 3;">
+{#                <div class="position-absolute top-0 end-0">#}
+{#                    <a role="button" href="{{ url_for('admin_bp.new_pay') }}"class="btn btn-pill btn-outline-dark"><i class="c-icon c-icon-2xl mt-5 mb-2 cil-plus"></i> Nouveau</a>#}
+{#                </div>#}
+            </div>
+            <div id="table"></div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block javascripts %}
+    <script src="{{ url_for('static', filename='gridjs/dist/gridjs.production.min.js') }}"></script>
+{#    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>#}
+{#    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>#}
+    <script>
+        {#$(document).ready(function (){#}
+        {#    $('.toast').toast('show');#}
+        function foo(component){
+            var bus_id = component.dataset['id'];
+            // AJAX request
+            $.ajax({
+               url: '{{ url_for('admin_bp.get_bus') }}',
+               type: 'POST',
+               data: JSON.stringify({bus_id: bus_id}),
+                dataType:"json",
+                contentType: "application/json; charset=utf-8",
+               success: function(response){
+                   // Add response in Modal body
+                   $('.modal-body').html(response.message);
+                   // Display Modal
+                   $('#userContent').modal('show');
+               }
+            });
+        }
+
+        new gridjs.Grid({
+            autoWidth:true,
+            fixedHeader:true,
+            style:{
+                table:{
+                    'width':"100%"
+                }
+            },
+            language:{
+                search: {
+                  placeholder: 'Recherche...',
+                },
+                sort: {
+                  sortAsc: 'Ordre croissant',
+                  sortDesc: 'Ordre décroissant',
+                },
+                pagination: {
+                  previous: 'Précédent',
+                  next: 'Suivant',
+                  navigate: (page, pages) => `Page ${page} of ${pages}`,
+                  page: (page) => `Page ${page}`,
+                  showing: 'Affichage..',
+                  of: 'de',
+                  to: 'à',
+                  results: 'résultats',
+                },
+                loading: 'Chargement...',
+                noRecordsFound: 'Aucun enregistrements',
+                error: 'Erreur pendant le chargement des données'},
+            columns: [
+                { id: 'id_invoice', name: 'ID facture' },
+                { id: 'id_transaction', name: 'ID paiement' },
+                { id: 'date', name: 'Date' },
+                { id: 'id_voyage', name: 'Vôyage' },
+                { id: 'client_full_name', name: 'Client' },
+                { id: 'amount', name: 'Montant total' },
+                { id:'actions', name:'Actions'}
+            ],
+            data: ()=>{
+                return new Promise(resolve => {
+                    setTimeout(()=>
+                        resolve([
+                {% if liste %}
+                    {% for b in liste %}
+                        {
+                            {#id: '{{ user["id"] }}',#}
+                            client_fullname :'{{ b["client_fullname"] }}',
+                            amount :'{{ b['amount'] }}',
+                            date :'{{ b['date'] }}',
+
+                            id_transaction :'{{ b['id_transaction'] }}',
+                            id_invoice :'{{ b['id_invoice'] }}',
+                            id_voyage :'{{ b['id_voyage'] }}',
+                            actions: gridjs.html(`<div class="btn-group">
+                                        <button id="user-info" class="btn btn-sm btn-outline-info"
+                                            data-id="{{ b['id'] }}" onclick="foo(this);" data-bs-toggle="tooltip"
+                                            data-bs-placement="bottom" title="Voir">
+                                            <i class="c-icon c-icon-2xl mt-5 mb-2 cil-user"></i></button>
+                                        <a role="button" class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer"
+                                            href="{{ url_for('admin_bp.pay',id_invoice=b['id_invoice']) }}">
+                                            <i class="c-icon c-icon-2xl mt-5 mb-2 cil-user-unfollow"></i>
+                                        </a>
+                                  </div>`
+                            )
+                        },
+                    {% endfor %}
+                {% endif %}
+            ]),1000
+                    )
+                })
+            },
+            search: {
+              selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4, 5].includes(cellIndex) ? cell : null,
+            },
+            sort: true,
+            pagination: true
+          }).render(document.getElementById('table'));
+    </script>
+{% endblock %}

@@ -5,11 +5,12 @@ from flask_sqlalchemy import SQLAlchemy
 
 from flask_login import LoginManager
 from flask_mail import Mail
+from flask_apscheduler import APScheduler
 app = Flask(__name__)
 database = SQLAlchemy()
 mail = Mail()
 login_manager = LoginManager()
-
+scheduler = APScheduler()
 def create_app(config_name):
     app.config.from_object(configs[config_name])
 
@@ -35,5 +36,8 @@ def create_app(config_name):
     login_manager.login_message="Vieullez connecter pour utiliser ce service"
     login_manager.login_message_category="info"
     login_manager.init_app(app)
+    # The task scheduler
+    scheduler.init_app(app)
+    scheduler.start()
 
     return app

@@ -103,6 +103,23 @@
                             <div class="mb-3">
                                 <div class="row g-3">
                                     <div class="col-sm form-floating">
+                                        {% if form.nb_places.errors %}
+                                        {{ form.nb_places(class="form-control is-invalid", placeholder="Nom complet ..") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.nb_places.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.nb_places(class="form-control", placeholder="Nom complet ..") }}
+                                    {% endif %}
+                                    {{ form.nb_places.label(class='form-control-label') }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="row g-3">
+                                    <div class="col-sm form-floating">
                                         {% if form.date_depart.errors %}
                                         {{ form.date_depart(class="form-control is-invalid", placeholder="Nom complet ..") }}
                                         <div class="invalid-feedback">

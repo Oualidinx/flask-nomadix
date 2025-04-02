@@ -143,10 +143,11 @@ class GuideForm(FlaskForm):
 from datetime import datetime
 class VoyagesForm(FlaskForm):
     destination = StringField("Destination", validators=[DataRequired('Champs obligatoire')])
-    date_depart = DateField('Date de la departure', validators=[DataRequired()])
+    date_depart = DateField('Date de la départ', validators=[DataRequired()])
     subscription_due_date=DateField('Date de clôture des inscriptions', validators=[DataRequired()])
     date_end = DateField("Date d'arrivée", validators=[DataRequired()])
     hotel_fees = IntegerField("Frais d'hôles", default=0, validators=[Optional()])
+    nb_places = IntegerField("Nombre de places", default=0, validators=[DataRequired(), NumberRange(min=1, max=200)])
     bus_company = QuerySelectField('Bus',
                                    allow_blank=True,
                                    blank_text="Sélectionner le bus",
@@ -189,7 +190,7 @@ class VoyagesForm(FlaskForm):
                 raise ValidationError('Date de retour non valide')
 
         if self.date_depart.data:
-            if self.date_depart.data >= date_end.data:
+            if self.date_depart.data > date_end.data:
                 raise ValidationError('Date de retour non valide par rapport à la date de départ')
 
     def validate_subscription_due_date(self, subscription_due_date):
@@ -243,3 +244,32 @@ class Subscription(FlaskForm):
     def validate_responsible_full_name(self, responsible_full_name):
         if responsible_full_name and name_regex.search(responsible_full_name.data) is None:
             raise ValidationError('Nom Invalide')
+
+from root.models import VoyageForAgency
+class PaymentForm(FlaskForm):
+    group_id = SelectField('ID Groupe: ', validate_choice=False)
+    rest_to_pay=StringField('Reste à payer (DZD) ')
+    montant_verse = StringField('Montant versé (DZD)')
+    versement = StringField('Versement (DZD)', validators=[DataRequired()])
+    submit = SubmitField('Envoyer')
+    def validate_group_id(self, group_id):
+        if not group_id.data:
+            raise ValidationError('Veuillez sélectionner d\'abord le group')
+        group = VoyageForAgency.query.filter_by(group_id=group_id.data).first()
+        if not group:
+            raise ValidationError("ID group n'est pas reconnu")
+
+
+    def validate_montant_verse(self, montant_verse):
+        if float(montant_verse.data)<0:
+            raise ValidationError('Montant verse invalide')
+
+    def validate_versement(self, versement):
+        if float(versement.data)<0:
+            raise ValidationError('Versement invalide')
+
+        v_for_a = VoyageForAgency.query.filter_by(fk_agency_id=int(self.group_id.data)).first()
+        if v_for_a:
+            if float(versement.data)>(float(self.rest_to_pay.data)+float(self.montant_verse.data)):
+                raise ValidationError('Vérifier la valeur saisie dans ce champ')
+

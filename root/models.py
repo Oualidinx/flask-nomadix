@@ -1,5 +1,6 @@
 from root import database as db
 from flask_login import UserMixin
+from sqlalchemy import and_
 
 from datetime import datetime
 import json
@@ -11,6 +12,9 @@ class DateTimeEncoder(json.JSONEncoder):
         else:
             return super().default(z)
 
+class Config(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    benefice = db.Column(db.Float, nullable=False)
 
 class User(UserMixin, db.Model):
     __tablename__="user"
@@ -49,6 +53,8 @@ class Voyage(db.Model):
     date_depart = db.Column(db.DateTime, default=datetime.utcnow)
     date_end = db.Column(db.DateTime, default=datetime.utcnow)
     hotel_fees = db.Column(db.Integer, default=0)
+    nb_places = db.Column(db.Integer, default = 0)
+    nb_free_places = db.Column(db.Integer, default = 0)
     # bus_company = db.Column(db.String(100))
     bus_fees = db.Column(db.Integer, default=0)
     visa_fees = db.Column(db.Integer, default=0)
@@ -62,14 +68,13 @@ class Voyage(db.Model):
     includes = db.relationship('Include', backref="travel_include", lazy="subquery")
     agencies = db.relationship("Agency", secondary="voyage_agency",
                                viewonly=True,
-                            primaryjoin="Agency.id == "
-                                        "foreign(VoyageForAgency.fk_agency_id)",
-                            secondaryjoin="Voyage.id == "
-                                          "foreign(VoyageForAgency.fk_voyage_id)")
-    invoices = db.relationship('Invoice', backref="voyage_invoices", lazy="subquery")
+                            primaryjoin="Voyage.id==foreign(VoyageForAgency.fk_voyage_id)",
+                            secondaryjoin="Agency.id==foreign(VoyageForAgency.fk_agency_id)")
+
+    # invoices = db.relationship('Invoice', backref="voyage_invoices", lazy="subquery")
 
 
-    def repr(self, columns=None):
+    def repr(self, columns=None, columns_for_agencies=None, columns_for_persons=None):
         _dict={
             "id": self.id,
             "destination": self.destination,
@@ -78,6 +83,8 @@ class Voyage(db.Model):
             "date_depart":self.date_depart.date(),
             "subscription_due_date":self.subscription_due_date.date(),
             "date_end":self.date_end.date(),
+            "nb_places":self.nb_places,
+            "nb_free_places":self.nb_free_places,
             "hotel_fees":"{:,.2f}".format(self.hotel_fees) if self.is_hotel_included else 0,
             "bus_company": Bus.query.get(self.includes[0].fk_bus_id) if len(self.includes)>0 and self.includes[0].fk_bus_id else "",
             "bus_fees":"{:,.2f}".format(self.bus_fees) if self.is_bus_included else 0,
@@ -91,7 +98,9 @@ class Voyage(db.Model):
             "is_hotel_included":"inclue" if self.is_hotel_included else "exclu",
             "is_bus_included":"inclue" if self.is_bus_included else "exclu",
             "is_visa_included":"inclue" if self.is_visa_included else "exclu",
-            "agencies":[agency.repr() for agency in self.agencies]
+            "agencies":[agency.repr(columns=columns_for_agencies, columns_for_persons=columns_for_persons) for agency in self.agencies] if len(self.agencies)>0 else None,
+            "subscription_status": ("#A6001A","Inscriptions fermées") if self.subscription_due_date < datetime.now() else None,
+            "places_status": ("#A6001A","Nombre de places atteint la limite") if self.nb_free_places == 0 else None,
         }
         return {key: _dict[key] for key in columns} if columns else _dict
 
@@ -116,11 +125,9 @@ class Bus(db.Model):
             'driver_full_name': self.driver_full_name,
             'capacity': self.capacity,
             'company': self.company,
-            'contacts': [contact.repr() for contact in self.contacts]
+            'contacts': [contact.repr(['phone'])['phone'] for contact in self.contacts]
         }
         return {key: _dict[key] for key in columns} if columns else _dict
-
-
 
 
 class Contact(db.Model):
@@ -207,32 +214,52 @@ class Hotel(db.Model):
             'star_rating': self.star_rating,
             "#voyages":len(self.voyages) if len(self.voyages)>0 else "/",
             "voyages":[v.repr() for v in self.voyages],
-            'contacts': [c.repr() for c in self.contacts]
+            'contacts': [c.repr(['phone'])['phone'] for c in self.contacts]
         }
         return {key: _dict[key] for key in columns} if columns else _dict
 
 
-
+# un group de person (agences) ou un seul client (indivduels)
 class Agency(db.Model):
     __tablename__ = "agency"
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(100))
+    responsible_full_name = db.Column(db.String(100))
+    code_grp = db.Column(db.String(50), nullable=False, default="G/")
+    created_at=db.Column(db.DateTime, default=datetime.utcnow)
     is_deleted = db.Column(db.Boolean, default=0)
     reserved_places= db.Column(db.Integer, default=0)
     contacts = db.relationship('Contact', backref="agency_contact", lazy='subquery')
     persons = db.relationship('Person', backref="agency_persons", lazy="subquery")
+    invoice = db.relationship('Invoice', backref="agency_invoice", lazy="subquery")
 
     def __repr__(self):
-        return f'{self.label}, Contacts: {self.contacts}'
+        return f'{self.label}, Responsable: {self.responsible_full_name}, Contacts: {self.contacts}'
+
+    def repr(self, columns=None, columns_for_persons=None):
+        _dict = {
+            'id':self.id,
+            'label': self.label,
+            'created_at': self.created_at,
+            'responsible_full_name': self.responsible_full_name,
+            'is_deleted': self.is_deleted,
+            'code_group':self.code_grp if self.code_grp else "No code yet",
+            'reserved_places': self.reserved_places,
+            'contacts':self.contacts[0].repr(['phone'])['phone'],
+            'persons':[p.repr(columns_for_persons) for p in self.persons]
+            # 'invoice':self.invoice.repr()
+        }
+        return {c:_dict[c] for c in columns} if columns else _dict
 
 
 class Invoice(db.Model):
     __tablename__ = "invoice"
     id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(100))
     date = db.Column(db.DateTime, default=datetime.utcnow)
     amount = db.Column(db.Integer)
     payments = db.relationship('Payment', backref='payments_invoice', lazy='subquery')
-    fk_voyage_id = db.Column(db.Integer, db.ForeignKey('voyage.id'))
+    # fk_voyage_id = db.Column(db.Integer, db.ForeignKey('voyage.id'))
     fk_agency_id = db.Column(db.Integer, db.ForeignKey('agency.id'))
     invoice_type = db.Column(db.String(100))
     entities = db.relationship('Entity', backref='invoice_entities', lazy='subquery')
@@ -248,6 +275,7 @@ class Invoice(db.Model):
 class Payment(db.Model):
     __tablename__ = "payment"
     id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(100))
     date = db.Column(db.DateTime, default=datetime.utcnow)
     amount = db.Column(db.Integer)
     type = db.Column(db.String(100))
@@ -256,6 +284,20 @@ class Payment(db.Model):
     def __repr__(self):
         return f'Date de payment={self.date}, Montant={self.amount}'
 
+    def repr(self, columns=None):
+        _dict = {
+            'id': self.id,
+            'date': self.date,
+            'id_invoice':Invoice.query.get(self.fk_invoice_id).code if self.fk_invoice_id and Invoice.query.get(self.fk_invoice_id) else "/",
+            'id_transaction':self.code,
+            'id_voyage':Voyage.query.get(Invoice.query.get(self.fk_invoice_id).voyage_id).id
+                                if self.fk_invoice_id and Voyage.query.get(Invoice.query.get(self.fk_invoice_id).voyage_id)
+                                   and Voyage.query.get(Invoice.query.get(self.fk_invoice_id).voyage_id).is_deleted==0 else "/",
+            'client_full_name':"",
+            'amount':"{:,.2f}".format(self.amount),
+        }
+        return {key: _dict[key] for key in columns} if columns else _dict
+
 
 class Person(db.Model):
     __tablename__ = "person"
@@ -263,8 +305,20 @@ class Person(db.Model):
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
     is_deleted = db.Column(db.Boolean, default=0)
+    sexe = db.Column(db.String(1))
     contacts = db.relationship('Contact', backref="person_contact", lazy='subquery')
     fk_agency_id = db.Column(db.Integer, db.ForeignKey('agency.id'))
+
+    def repr(self, columns=None):
+        _dict={
+            'id':self.id,
+            'first_name':self.first_name,
+            'last_name':self.last_name,
+            'sexe':self.sexe,
+            'is_deleted':self.is_deleted,
+            'contacts':self.contacts[0].repr(['phone'])['phone'],
+        }
+        return {c:_dict[c] for c in columns} if columns else _dict
 
 
 class Include(db.Model):
@@ -284,7 +338,14 @@ class VoyageForAgency(db.Model):
     rest_to_pay=db.Column(db.Integer, default = 0)
 
     def __repr__(self, columns=None):
-        return None
+        return f"Groupe= {Agency.query.get(self.fk_agency_id).label} , Voyage = {Voyage.query.get(self.fk_voyage_id).destination}"
+
+    def repr(self, columns_voyage=None, columns_agency=None):
+        voyage_dict = Voyage.query.get(self.fk_voyage_id).repr(columns_voyage)
+        group_dict = Agency.query.get(self.fk_agency_id).repr(columns_agency)
+        group_dict.update(voyage_dict)
+        return group_dict
+
 
 class Entity(db.Model):
     __tablename__ = "entity"

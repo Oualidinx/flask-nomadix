@@ -8,7 +8,63 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mermaid.min.css') }}">
 {% endblock stylesheets %}
 
+{% block sidebar %}
 
+    <div class="sidebar sidebar-dark sidebar-fixed" id="sidebar">
+      <div class="sidebar-brand d-none d-md-flex">
+        <svg class="sidebar-brand-full" width="118" height="46">
+          <use xlink:href="/static/assets/brand/coreui.svg#full"></use>
+        </svg>
+        <svg class="sidebar-brand-narrow" width="46" height="46">
+          <use xlink:href="/static/assets/brand/coreui.svg#signet"></use>
+        </svg>
+      </div>
+      <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_bp.index') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-speedometer"></use>
+            </svg> Dashboard Nomadix</a></li>
+        <li class="nav-title">Users</li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_bp.register') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-user-plus"></use>
+            </svg> Nouvel utilisateur</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_bp.users') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+            </svg> Tous les utilisateurs </a></li>
+        <li class="nav-title">Voyages</li>
+        <li class="nav-group"><a class="nav-link" href="{{ url_for('admin_bp.voyages') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+            </svg> Liste de voyages </a>
+        </li>
+          <li class="nav-group"><a class="nav-link" href="{{ url_for('admin_bp.hotels') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+            </svg> Liste de hôtels </a>
+        </li>
+          <li class="nav-group"><a class="nav-link" href="{{ url_for('admin_bp.buses') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+            </svg> Liste de bus </a>
+        </li>
+          <li class="nav-group"><a class="nav-link" href="{{ url_for('admin_bp.guides') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+            </svg> Liste de guides </a>
+        </li>
+
+          <li class="nav-title">finance</li>
+          <li class="nav-group"><a class="nav-link" href="{{ url_for('admin_bp.payments') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+            </svg> Liste de paiements </a>
+        </li>
+      </ul>
+    </div>
+
+{% endblock %}
 <div class="body flex-grow-1 px-3">
     <div class="container-lg">
         {% block content %}

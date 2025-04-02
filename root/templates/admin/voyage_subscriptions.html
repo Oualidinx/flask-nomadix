@@ -22,11 +22,9 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-
 	<div class="card">
-
         <div class="card-header">
-            <i class="fa fa-align-justify"></i> Tous les voyages
+            <i class="fa fa-align-justify"></i> Tous les participant de voyage: {{ object['destination'] }}
         </div>
         <div class="card-body">
             <div class="position-relative" style="z-index: 3;">
@@ -64,23 +62,23 @@
         $(document).ready(function (){
             $('.toast').toast('show');
         })
-        function foo(component){
-            var v_id = component.dataset['id'];
-            // AJAX request
-            $.ajax({
-               url: '{{ url_for('admin_bp.get_voyage') }}',
-               type: 'POST',
-               data: JSON.stringify({voyage_id: v_id}),
-                dataType:"json",
-                contentType: "application/json; charset=utf-8",
-               success: function(response){
-                   // Add response in Modal body
-                   $('.modal-body').html(response.message);
-                   // Display Modal
-                   $('#voyageContent').modal('show');
-               }
-            });
-        }
+        {#function foo(component){#}
+        {#    var v_id = component.dataset['id'];#}
+        {#    // AJAX request#}
+        {#    $.ajax({#}
+        {#       url: '{{ url_for('admin_bp.get_voyage') }}',#}
+        {#       type: 'POST',#}
+        {#       data: JSON.stringify({voyage_id: v_id}),#}
+        {#        dataType:"json",#}
+        {#        contentType: "application/json; charset=utf-8",#}
+        {#       success: function(response){#}
+        {#           // Add response in Modal body#}
+        {#           $('.modal-body').html(response.message);#}
+        {#           // Display Modal#}
+        {#           $('#voyageContent').modal('show');#}
+        {#       }#}
+        {#    });#}
+        {#}#}
 
         new gridjs.Grid({
             autoWidth:true,
@@ -112,64 +110,51 @@
                 noRecordsFound: 'Aucun enregistrements',
                 error: 'Erreur pendant le chargement des données'},
             columns: [
-                { id: 'id', name: 'Num' },
-                { id: 'destination', name: 'Destination' },
-                { id: 'date_depart', name: 'Dae de départ' },
-                { id: 'end_date', name: 'Date de retour' },
-                { id: 'created_by', name: 'Crée par' },
-                { id: 'status', name: "État"},
+                {#{ id: 'id', name: 'Num' },#}
+                { id: 'id_group', name: 'ID group' },
+                { id: 'title', name: 'Titre' },
+                { id: 'responsable', name: 'Responsable de groupe' },
+                { id: 'contact', name: 'Contact' },
+                { id: 'nb_places', name: 'Nombr de places' },
                 { id:'actions', name:'Actions'}
             ],
             data: ()=>{
                 return new Promise(resolve => {
                     setTimeout(()=>
                         resolve([
-                {% if liste %}
-                    {% for b in liste %}
+                {% if object %}
+                    {% for b in object['agencies'] %}
                         {
-                            id:{{ b['id'] }},
-                            destination :'{{ b["destination"] }}',
-                            date_depart :'{{ b['date_depart'] }}',
-                            end_date :'{{ b['date_end'] }}',
-                            created_by :'{{ b['created_by'] }}',
-                            status:gridjs.html(`
-                                    {% if b['subscription_status']!=None %}
-                                        <span class="badge rounded-pill" style="background-color: #A6001A;">Inscriptions fermées</span>
-                                    {% endif %}
-                                    {% if b['places_status']!=None %}
-                                        <span class="badge rounded-pill" style="background-color: #A6001A;">Nombre de places atteint la limite</span>
-                                    {% endif %}`),
+                            id_group :'{{ b["code_group"] }}',
+                            title :'{{ b['label'] }}',
+                            nb_places :'{{ b['reserved_places'] }}',
+                            responsable :'{{ b['responsible_full_name'] }}',
+                            contact :'{{ b['contacts'] }}',
+                            {#status:gridjs.html(`#}
+{#                                    {% if b['subscription_status']!=None %}#}
+{#                                        <span class="badge rounded-pill" style="background-color: #A6001A;">Inscriptions fermées</span>#}
+{#                                    {% endif %}#}
+{#                                    {% if b['places_status']!=None %}#}
+{#                                        <span class="badge rounded-pill" style="background-color: #A6001A;">Nombre de places atteint la limite</span>#}
+{#                                    {% endif %}`),#}
                             actions: gridjs.html(`<div class="btn-group">
-                                        <button id="user-info" class="btn btn-sm btn-outline-info"
-                                            data-id="{{ b['id'] }}" onclick="foo(this);" data-bs-toggle="tooltip"
-                                            data-bs-placement="bottom" title="Voir">
-                                            info</button>
-                                        <a role="button" class="btn btn-sm btn-outline-danger"
-                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer"
-                                            href="{{ url_for('admin_bp.delete_voyage',voyage_id=b['id']) }}">
-                                            <i class="cil-delete"></i>
+                                        {#<button id="user-info" class="btn btn-sm btn-outline-info"#}
+                                        {#    data-id="{{ b['id'] }}" onclick="foo(this);" data-bs-toggle="tooltip"#}
+                                        {#    data-bs-placement="bottom" title="Voir">#}
+                                        {#    info</button>#}
+                                        {#<a role="button" class="btn btn-sm btn-outline-danger"#}
+                                        {#    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer"#}
+                                        {#    href="{{ url_for('admin_bp.delete_voyage',voyage_id=b['id']) }}">#}
+                                        {#    <i class="cil-delete"></i>#}
+                                        {#</a>#}
+                                        {#<a role="button" class="btn btn-sm btn-outline-primary"#}
+                                        {#    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Inscriptions au voyage"#}
+                                        {#    href="{{ url_for('admin_bp.subscription',voyage_id=b['id']) }}">#}
+                                        {#    <i class="cil-people"></i>#}
+                                        {#</a>#}
+                                        <a class="btn btn-sm btn-outline-info" href="{{ url_for('admin_bp.print_voyage', _id=b['id']) }}">
+                                            Imprimer le récépissé
                                         </a>
-                                        <a role="button" class="btn btn-sm btn-outline-primary"
-                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Inscriptions au voyage"
-                                            href="{{ url_for('admin_bp.subscription',voyage_id=b['id']) }}">
-                                            <i class="cil-people"></i>
-                                        </a>
-                                        {% if b['agencies']!=None %}
-                                        <button class="btn btn-sm btn-outline-info dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="fa-solid fa-arrows-rotate"></i>
-                                        </button>
-
-                                        <div class="dropdown-menu" x-placement="bottom-start" style="will-change: transform; margin: 0px;">
-                                            <a class="dropdown-item" href="{{ url_for('admin_bp.subscriptions', voyage_id=b['id']) }}">
-                                                Voir tous les inscrits
-                                            </a>
-                                            <a class="dropdown-item" href="{{ url_for('admin_bp.print_list', voyage_id=b['id']) }}">
-                                                Imprimer la liste
-                                            </a>
-                                            <a class="dropdown-item" href="{{ url_for('admin_bp.pay', v_id=b['id']) }}">
-                                                Nouveau paiement
-                                            </a>
-                                        {% endif %}
                                   </div>`
                             )
                         },

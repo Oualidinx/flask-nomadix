@@ -1,0 +1,128 @@
+{% extends "layouts/admin_home.html" %}
+{% block subtitle %}
+    Nouveau paiement
+{% endblock %}
+{% block stylesheets %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='assets/css/select2.min.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/select2-bootstrap-5.min.css')}}">
+{% endblock %}
+{% block content %}
+	<div class="container-lg mt-lg-5">
+        <div class="card">
+            <div class="card-header"><strong>Nouveau</strong> paiement</div>
+            <div class="card-body">
+                <form class="form-horizontal" method="post">
+                    {{ form.hidden_tag() }}
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category , message in messages %}
+                                <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
+                                    <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                        <div class="d-flex">
+                                            <div class="toast-body">
+                                                {{ message }}
+
+                                            </div>
+                                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    <div class="row g-3">
+                        <div class="col-sm form-floating">
+                             {% if form.group_id.errors %}#}
+                                    {{ form.group_id(class="form-select is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.group_id.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.group_id(class="form-select") }}
+                                {% endif %}
+                            {{ form.group_id.label(class='form-control-label') }}
+                        </div>
+                    </div>
+                    <div class="row mt-3 g-3">
+                        <div class="col-sm form-floating">
+                            {% if form.rest_to_pay.errors %}
+                                    {{ form.rest_to_pay(class="form-control is-invalid", readonly=True) }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.rest_to_pay.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.rest_to_pay(class="form-control", readonly=True) }}
+                                {% endif %}
+                            {{ form.rest_to_pay.label(class='form-control-label') }}
+                        </div>
+                        <div class="col-sm form-floating">
+                            {% if form.montant_verse.errors %}
+                                    {{ form.montant_verse(class="form-control is-invalid", readonly=True) }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.montant_verse.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.montant_verse(class="form-control", readonly=True) }}
+                                {% endif %}
+                            {{ form.montant_verse.label(class='form-control-label') }}
+                        </div>
+
+                        <div class="col-sm form-floating">
+                             {% if form.versement.errors %}#}
+                                    {{ form.versement(class="form-control is-invalid", placeholder="Numéro de téléphone du conducteur ..") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.versement.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.versement(class="form-control", placeholder="Numéro de téléphone du conducteur ..") }}
+                                {% endif %}
+                            {{ form.versement.label(class='form-control-label') }}
+                        </div>
+                    </div>
+                    <div class="card-footer mt-lg-4">
+                        {{ form.submit(class="btn btn-sm btn-success") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block javascripts %}
+    <script src="{{ url_for('static',filename='js/select2.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script !src="">
+        $(document).ready(function( ) {
+            $("#group_id").select2({
+                theme: 'bootstrap-5'
+            });
+            $('#group_id').on('change', function(){
+                const rest_to_pay =  document.getElementById('rest_to_pay');
+                const total_paid = document.getElementById('montant_verse')
+                $.ajax({
+                        url: "{{ url_for('admin_bp.get_costs') }}",
+                        dataType: 'json',
+                        contentType:"application/json",
+                        type:"get",
+                        data:{
+                            item_id:$(this).val(),
+                        },
+                        statusCode: {
+                            200: function (response){
+                                rest_to_pay.setAttribute('value', response.data['rest_to_pay']);
+                                total_paid.setAttribute('value', response.data['total_paid']);
+                            }
+                        }
+                    })
+            })
+
+        });
+    </script>
+{% endblock %}

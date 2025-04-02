@@ -3,18 +3,15 @@ import secrets
 
 from flask import url_for, redirect, render_template, jsonify, session, abort, request, flash
 from flask_login import current_user
-from wtforms.validators import ValidationError
 
-from forms import Subscription, PersonForm
 from root.admin import admin_bp
 from flask_login import login_required
-from root.admin.forms import RegistrationForm, HotelForm, BusForm,GuideForm, VoyagesForm
+from root.admin.forms import Subscription, PersonForm, RegistrationForm, HotelForm, BusForm,GuideForm, VoyagesForm, PaymentForm
 from flask_weasyprint import HTML, render_pdf
 from root.models import *
 from werkzeug.security import generate_password_hash
 
 from root import database
-
 
 @admin_bp.get('/')
 @login_required
@@ -102,7 +99,8 @@ def voyages():
     if _voyages:
         for b in _voyages:
             liste.append(b.repr(
-                columns=['id',"destination","created_by","date_depart","date_end"]
+                columns=['id',"destination","created_by","date_depart",
+                         "agencies","date_end","subscription_status","places_status"]
             ))
     return render_template('admin/voyages.html', liste=liste)
 
@@ -243,17 +241,17 @@ def get_voyage():
     _dict = v.repr()
     return jsonify(
         message=f"<h3 class='h3 fw-bold'>Excursion vers {_dict['destination']}</h3>"
-                f"<br><span class='fw-bold mb-3'> Date de départ: </span>{_dict['date_depart']}<br>"
-                f"<br><span class='fw-bold mb-3'> Date de retour: </span>{_dict['date_end']}<br>"
-                f"<br><span class='fw-bold mb-3'> Date de clôture des inscriptions: </span>{_dict['subscription_due_date']}<br>"
-                f"<br><span class='fw-bold mb-3'> Bus: </span>{_dict['is_bus_included']}<br>"
-                f"<br><span class='fw-bold mb-3'> Companie de bus: </span>{_dict['bus_company']}<br>"
-                f"<br><span class='fw-bold mb-3'> Guide: </span>{_dict['is_guide_included']}<br>"
-                f"<br><span class='fw-bold mb-3'> Nom du guide: </span>{_dict['guide_full_name']}<br>"
-                f"<br><span class='fw-bold mb-3'> Hôtel: </span>{_dict['is_hotel_included']}<br>"
-                f"<br><span class='fw-bold mb-3'> Nom de l'hôtel: </span>{_dict['hotel_name']}<br>"
-                f"<br><span class='fw-bold mb-3'> Avion: </span>{_dict['is_plane_included']}<br>"
-                f"<br><span class='fw-bold mb-3'> Visa: </span>{_dict['is_visa_included']}<br>"
+                f"<span class='fw-bold mb-3'> Date de départ: </span>{_dict['date_depart']}<br>"
+                f"<span class='fw-bold mb-3'> Date de retour: </span>{_dict['date_end']}<br>"
+                f"<span class='fw-bold mb-3'> Date de clôture des inscriptions: </span>{_dict['subscription_due_date']}<br>"
+                f"<span class='fw-bold mb-3'> Bus: </span>{_dict['is_bus_included']}<br>"
+                f"<span class='fw-bold mb-3'> Companie de bus: </span>{_dict['bus_company']}<br>"
+                f"<span class='fw-bold mb-3'> Guide: </span>{_dict['is_guide_included']}<br>"
+                f"<span class='fw-bold mb-3'> Nom du guide: </span>{_dict['guide_full_name']}<br>"
+                f"<span class='fw-bold mb-3'> Hôtel: </span>{_dict['is_hotel_included']}<br>"
+                f"<span class='fw-bold mb-3'> Nom de l'hôtel: </span>{_dict['hotel_name']}<br>"
+                f"<span class='fw-bold mb-3'> Avion: </span>{_dict['is_plane_included']}<br>"
+                f"<span class='fw-bold mb-3'> Visa: </span>{_dict['is_visa_included']}<br>"
     ), 200
 
 
@@ -464,9 +462,15 @@ def add_voyage():
     if form.validate_on_submit():
         voyage = Voyage()
         voyage.destination = form.destination.data
+
+        voyage.nb_places = form.nb_places.data
+        voyage.nb_free_places = form.nb_places.data
         voyage.date_depart = form.date_depart.data
         voyage.date_end=form.date_end.data
-        voyage.subscription_due_date = form.subscription_due_date.data+datetime.timedelta(hours=23, minutes=59, seconds=59)
+        import datetime as dt
+        voyage.subscription_due_date = form.subscription_due_date.data
+        voyage.subscription_due_date += dt.timedelta(hours=23, minutes=59, seconds=59)
+        print(f'due date= {voyage.subscription_due_date}')
         # voyage.bus_company = form.bus_company.data if form.is_bus_included.data else None
         voyage.is_bus_included = True if form.is_bus_included.data else False
         voyage.bus_fees = int(form.bus_fees.data) if form.is_bus_included.data else None
@@ -507,25 +511,38 @@ def subscription(voyage_id):
     if not voyage:
         return render_template('errors/404.html', blueprint="admin_bp")
 
-    if voyage.subscription_due_date > datetime.now():
-        flash("Inscription fermé, vous ne pouvez pas procèder d'autres", "warnings")
+    if voyage.subscription_due_date < datetime.now():
+        flash("Inscription fermé, vous ne pouvez pas procèder d'autres", "warning")
         return redirect(url_for("admin_bp.voyages"))
     form=Subscription()
     if form.validate_on_submit():
         agency = Agency()
         agency.label = form.label.data
         agency.reserved_places = form.reserved_places.data
+        if agency.reserved_places > voyage.nb_free_places:
+            flash('Le nombre de places n\'est pas suffisant pour ce group', 'danger')
+            return render_template('admin/subscription.html',
+                                        form=form,
+                                        nested=PersonForm())
+
+        agency.reserved_places = form.reserved_places.data
+        agency.responsible_full_name = form.responsible_full_name.data
         entities = list()
+        persons_contacts = list()
         if enumerate(form.persons):
-            _ = Person()
             for _index, entry in enumerate(form.persons):
+                _ = Person()
                 if entry.delete_entry.data:
                     del form.persons.entries[_index]
                     return render_template("admin/subscription.html",
                                            form=form, nested=PersonForm())
                 _.first_name = entry.first_name.data if entry.first_name.data else None
                 _.last_name = entry.last_name.data if entry.last_name.data else None
-
+                _.sexe = entry.sexe.data if entry.sexe.data else None
+                _c = Contact()
+                _c.name = f"téléphone de {_.first_name} {_.last_name}"
+                _c.phone = entry.phone_number.data if entry.phone_number.data else None
+                persons_contacts.append(_c)
                 entities.append(_)
         if form.add.data:
             form.persons.append_entry({
@@ -536,18 +553,165 @@ def subscription(voyage_id):
             return render_template('admin/subscription.html',
                                    form=form,
                                    nested=PersonForm())
+        # if form.fin.data:
+        #     return render_template('admin/subscription.html',
+        #                            form=form,
+        #                            nested=PersonForm())
+        contact = Contact()
+        contact.phone = form.phone_number.data
+        contact.name = f"Numéro de téléphone de monsieur {agency.responsible_full_name} responsable du groupe {agency.label}"
         database.session.add(agency)
         database.session.commit()
+        contact.fk_agency_id = agency.id
+        database.session.add(contact)
+        database.session.commit()
         v_for_a = VoyageForAgency()
+        last_v = VoyageForAgency.query.order_by(VoyageForAgency.id.desc()).limit(1).first().code_grp
+        last_code = last_v
+        last_code = last_code.split("/")
+        if len(last_code[1]) == '':
+            last_v = last_v+"1"
+        else:
+            last_v = last_v+str(int(last_code[1])+1)
+        v_for_a.code_grp = last_v
         v_for_a.fk_voyage_id = voyage.id
         v_for_a.fk_agency_id=agency.id
         database.session.add(v_for_a)
         database.session.commit()
-
+        voyage.nb_free_places = voyage.nb_free_places - agency.reserved_places
+        database.session.add(voyage)
+        i = 0
         for e in entities:
             e.fk_agency_id = agency.id
             db.session.add(e)
             db.session.commit()
-        flash('Inscription crée avec succès', 'success')
-        return redirect(url_for("admin_bp.voyages"))
+            persons_contacts[i].fk_person_id = e.id
+            db.session.add(persons_contacts[i])
+            db.session.commit()
+            i+=1
+
+        # flash('Inscription crée avec succès', 'success')
+        # return redirect(url_for("admin_bp.voyages"))
+        return redirect(url_for('admin_bp.print_voyage', _id = v_for_a.id))
     return render_template('admin/subscription.html', form=form, nested=PersonForm())
+
+
+
+@admin_bp.get('/payments')
+@login_required
+def payments():
+    _payments= Payment.query.all()
+    if _payments:
+        pass
+    return render_template("admin/payments.html")
+
+
+@admin_bp.get('/voyage/<int:voyage_id>/print')
+@login_required
+def print_list(voyage_id):
+    _order = Voyage.query.get(voyage_id)
+    if not _order or _order.is_deleted:
+        return render_template("errors/404.html", blueprint="admin_bp")
+
+
+    objects = _order.repr(['destination','date_depart','agencies'],
+                         columns_for_agencies=['id','responsible_full_name','code_group','label', 'persons'],
+                         columns_for_persons=['first_name','last_name','sexe','contacts'])
+    # _objects = objects
+    # for agency in objects['agencies']:
+    #     v_for_a = VoyageForAgency.query.get(agency['id'])
+    #     if v_for_a.rest_to_pay!=0:
+    #         _objects['agencies'].remove(agency)
+    nb_persons = 0
+    for agency in objects['agencies']:
+        nb_persons += len(agency['persons'])
+    html = render_template('admin/voyage_subscriptions_pdf.html',
+                           object=objects,
+                           nb_persons = nb_persons,
+                           titre="Liste des participants"
+                           )
+    response = HTML(string=html)
+    return render_pdf(response,
+                      download_filename=f'participants_{_order.id}_{objects["destination"]}.pdf',
+                      automatic_download=True)
+
+@admin_bp.get('/print/<int:_id>')
+@login_required
+def print_voyage(_id):
+    _order = VoyageForAgency.query.get(_id)
+    if not _order:
+        return render_template("errors/404.html", blueprint="admin_bp")
+    object = _order.repr(columns_voyage=['destination', 'date_depart'],
+                         columns_agency=['label', 'created_at', 'responsible_full_name', "contacts"])
+    html = render_template('admin/order.html',
+                           object=object,
+                           )
+    response = HTML(string=html)
+    return render_pdf(response,
+                      download_filename=f'voyage_{_order.id}_{object["responsible_full_name"]}.pdf',
+                      automatic_download=True)
+
+
+@admin_bp.get('/subscription/<int:voyage_id>')
+@login_required
+def subscriptions(voyage_id):
+    voyage = Voyage.query.get(voyage_id)
+    if not voyage or voyage.is_deleted==True:
+        return render_template("errors/404.html", blueprint="admin_bp")
+    print(f'les groupe de ce voyage:::: {len(voyage.agencies)}')
+    v_for_a = VoyageForAgency.query.filter_by(fk_voyage_id = voyage_id).all()
+    if not v_for_a:
+        return render_template("errors/404.html", blueprint="admin_bp")
+
+    return render_template("admin/voyage_subscriptions.html", object=voyage.repr(['destination','id','agencies']))
+
+
+@admin_bp.get('/new_pay')
+@admin_bp.post('/new_pay')
+@login_required
+def new_pay():
+    pass
+
+
+@admin_bp.get('/<int:v_id>/pay')
+@admin_bp.post('/<int:v_id>/pay')
+@login_required
+def pay(v_id):
+    form = PaymentForm()
+    voyage = Voyage.query.get(v_id)
+    if not voyage:
+        return render_template("errors/404.html", blueprint="admin_bp")
+    form.group_id.choices = [(None, 'Sélectionner le groupe')]+[(x.id, f'{x.code_grp}, {x.responsible_full_name}') for x in voyage.agencies]
+    if form.validate_on_submit():
+        v_for_a = VoyageForAgency.query.filter_by(fk_agency_id=int(form.group_id.data)).first()
+        try:
+            v_for_a.rest_to_pay = v_for_a.rest_to_pay - float(form.versement.data)
+
+            database.session.add(v_for_a)
+            database.session.commit()
+            flash('Opération se termine avec succès','success')
+        except:
+            database.session.rollback()
+            flash('Erreur','danger')
+        return redirect(url_for('admin_bp.voyages'))
+    return render_template('admin/new_payment.html', form = form)
+
+
+@admin_bp.get('/costs')
+@login_required
+def get_costs():
+    if 'item_id' not in request.args:
+        abort(400)
+
+    agency = Agency.query.get(request.args['item_id'])
+    if not agency:
+        abort(404)
+
+    v_for_a = VoyageForAgency.query.filter_by(fk_agency_id=int(agency.id)).first()
+    if v_for_a:
+        items ={
+            'rest_to_pay':"{:,.2f}".format(v_for_a.rest_to_pay),
+            'total_paid':"{:,.2f}".format(v_for_a.total_paid)
+        }
+        return jsonify(data=items),200
+    abort(404)
