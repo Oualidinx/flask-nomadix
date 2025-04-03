@@ -2,7 +2,6 @@ import datetime
 import secrets
 
 from flask import url_for, redirect, render_template, jsonify, session, abort, request, flash
-from flask_login import current_user
 
 from root.admin import admin_bp
 from flask_login import login_required
@@ -111,7 +110,6 @@ def voyages():
 @login_required
 def register():
     form = RegistrationForm()
-
     if form.validate_on_submit():
         user = User()
         user.first_name = form.first_name.data
@@ -125,18 +123,21 @@ def register():
         database.session.add(user)
         database.session.commit()
         # send_reset_email(user, "auth_bp.verify_email", subject='Email verification)
-        form = RegistrationForm()
-        return redirect(url_for("admin_bp.print_credentials"))
+
+        html = render_template('admin/credentials.html',
+                               username=session['username'],
+                               password=session['password'])
+        return render_pdf(HTML(string=html), automatic_download=True, download_filename=f"password_{datetime.datetime.now().date()}.pdf")
     return render_template('admin/add_user.html', form=form)
 
 
-@admin_bp.get('/print')
-@login_required
-def print_credentials():
-    html = render_template('admin/credentials.html',
-                           username = session['username'],
-                           password = session['password'])
-    return render_pdf(HTML(string=html))
+# @admin_bp.get('/print')
+# @login_required
+# def print_credentials():
+#     html = render_template('admin/credentials.html',
+#                            username = session['username'],
+#                            password = session['password'])
+#     return render_pdf(HTML(string=html), download_filename=f"password_{datetime.datetime.now().date()}.pdf")
 
 
 @admin_bp.post('/users/get')
@@ -252,6 +253,7 @@ def get_voyage():
                 f"<span class='fw-bold mb-3'> Nom de l'hôtel: </span>{_dict['hotel_name']}<br>"
                 f"<span class='fw-bold mb-3'> Avion: </span>{_dict['is_plane_included']}<br>"
                 f"<span class='fw-bold mb-3'> Visa: </span>{_dict['is_visa_included']}<br>"
+                f"<span class='fw-bold mb-3'> Nombre des inscrits: </span>{_dict['nb_places']-_dict['nb_free_places']}<br>"
     ), 200
 
 
@@ -643,7 +645,7 @@ def print_voyage(_id):
         return render_template("errors/404.html", blueprint="admin_bp")
     object = _order.repr(columns_voyage=['destination', 'date_depart'],
                          columns_agency=['label', 'created_at', 'responsible_full_name', "contacts"])
-    html = render_template('admin/order.html',
+    html = render_template('admin/order_pdf.html',
                            object=object,
                            )
     response = HTML(string=html)
@@ -672,7 +674,7 @@ def subscriptions(voyage_id):
 def new_pay():
     pass
 
-
+from num2words import num2words as nw
 @admin_bp.get('/<int:v_id>/pay')
 @admin_bp.post('/<int:v_id>/pay')
 @login_required
@@ -682,18 +684,40 @@ def pay(v_id):
     if not voyage:
         return render_template("errors/404.html", blueprint="admin_bp")
     form.group_id.choices = [(None, 'Sélectionner le groupe')]+[(x.id, f'{x.code_grp}, {x.responsible_full_name}') for x in voyage.agencies]
+
     if form.validate_on_submit():
         v_for_a = VoyageForAgency.query.filter_by(fk_agency_id=int(form.group_id.data)).first()
-        try:
-            v_for_a.rest_to_pay = v_for_a.rest_to_pay - float(form.versement.data)
-
-            database.session.add(v_for_a)
-            database.session.commit()
-            flash('Opération se termine avec succès','success')
-        except:
-            database.session.rollback()
-            flash('Erreur','danger')
-        return redirect(url_for('admin_bp.voyages'))
+    # try:
+        v_for_a.rest_to_pay = v_for_a.rest_to_pay - float(form.versement.data)
+        v_for_a.total_paid = v_for_a.total_paid + float(form.versement.data)
+        database.session.add(v_for_a)
+        database.session.commit()
+        total_letters = nw(float(form.versement.data), lang='fr') + " dinars algérien"
+        virgule = float(form.versement.data) - float(int(form.versement.data))
+        if virgule > 0:
+            total_letters += f' et {int(round(virgule, 2))} centimes'
+        flash('Opération se termine avec succès', 'success')
+        html = render_template('admin/payment_pdf.html',
+                               current_employee=f"{str.upper(current_user.first_name)} {current_user.last_name}",
+                               today=datetime.now().date(),
+                               destination=voyage.destination,
+                               responsable_group=Agency.query.get(int(form.group_id.data)).responsible_full_name,
+                               cost_paid="{:,.2f}".format(float(form.versement.data)),
+                               total_letters = total_letters
+                               )
+        payment=Payment()
+        payment.created_by = current_user.id
+        payment.amount = float(form.versement.data)
+        payment.type="vente"
+        database.session.add(payment)
+        database.session.commit()
+        return render_pdf(HTML(string=html),
+                               download_filename=f'payment_{Agency.query.get(int(form.group_id.data)).code_grp}_{voyage.destination}.pdf',
+                               automatic_download=True)
+    # except Exception as e:
+    #     database.session.rollback()
+    #     flash(f'Erreur:{e}','danger')
+    #     return redirect(url_for('admin_bp.voyages'))
     return render_template('admin/new_payment.html', form = form)
 
 

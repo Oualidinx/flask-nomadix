@@ -11,7 +11,7 @@
         <div class="card">
             <div class="card-header"><strong>Nouveau</strong> paiement</div>
             <div class="card-body">
-                <form class="form-horizontal" method="post">
+                <form class="form-horizontal" method="post" onsubmit="setTimeout(() => { window.location.reload() }, 1000)">
                     {{ form.hidden_tag() }}
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}

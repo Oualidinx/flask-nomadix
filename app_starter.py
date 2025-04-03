@@ -1,6 +1,8 @@
 import datetime as dt
 
 from flask_migrate import Migrate
+from sqlalchemy.sql.operators import or_, and_
+
 from root import create_app,database
 from flask import redirect, url_for
 import os
@@ -15,14 +17,15 @@ app.config.update(dict(
         MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     ))
 migrate = Migrate(app=app, db=database)
-moment_to_trigger = dt.datetime.now()+dt.timedelta(minutes=30)
+moment_to_trigger = dt.datetime.now()+dt.timedelta(seconds=120)
+
 def update_database():
     with app.app_context():
-        voyages = Voyage.query.filter_by(is_deleted = 0).filter(Voyage.subscription_due_date<moment_to_trigger).all()
-        # for v in voyages:
-        #     print(v.subscription_due_date)
+        voyages = Voyage.query.filter(and_(Voyage.is_deleted == False,
+                                           or_(Voyage.is_submitted_for_payment == False,
+                                               Voyage.is_submitted_for_payment == None)))\
+                                .filter(Voyage.subscription_due_date<moment_to_trigger).all()
         if len(voyages)>0:
-            # print(len(voyages))
             for v in voyages:
                 participants = v.nb_places - v.nb_free_places
                 if participants!=0:
@@ -44,15 +47,20 @@ def update_database():
                                 v_for_a.total_paid=0
                                 database.session.add(v_for_a)
                                 database.session.commit()
-                        except:
+
+                        except Exception as e:
                             database.session.rollback()
+                    v.is_submitted_for_payment=True
+                    database.session.add(v)
+                    database.session.commit()
 
 with app.app_context():
-    # print("entered here")
+    # voyages = Voyage.query.filter(and_(Voyage.is_deleted == False, or_(Voyage.is_submitted_for_payment == False, Voyage.is_submitted_for_payment==None))) \
+    #     .filter(Voyage.subscription_due_date < moment_to_trigger).all()
+    # for v in voyages:
+    #     print(v.subscription_due_date)
     scheduler.add_job(id=f"calculer_prix_voyage", func=update_database,
-          # trigger="date", run_date=moment_to_trigger)
-                      trigger="date", run_date=datetime.now())
-    # print(scheduler.get_jobs())
+                      trigger="date", run_date=dt.datetime.now())
 
 @app.route('/')
 def index():

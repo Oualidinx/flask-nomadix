@@ -1,7 +1,6 @@
 from root import database as db
 from flask_login import UserMixin
-from sqlalchemy import and_
-
+from flask_login import current_user
 from datetime import datetime
 import json
 
@@ -47,6 +46,7 @@ class Voyage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     destination = db.Column(db.String(100))
     is_deleted = db.Column(db.Boolean, default=0)
+    is_submitted_for_payment=db.Column(db.Boolean, default = 0)
     subscription_due_date=db.Column(db.DateTime, default=datetime.now())
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -55,7 +55,6 @@ class Voyage(db.Model):
     hotel_fees = db.Column(db.Integer, default=0)
     nb_places = db.Column(db.Integer, default = 0)
     nb_free_places = db.Column(db.Integer, default = 0)
-    # bus_company = db.Column(db.String(100))
     bus_fees = db.Column(db.Integer, default=0)
     visa_fees = db.Column(db.Integer, default=0)
     guide_fees = db.Column(db.Integer, default=0)
@@ -258,6 +257,7 @@ class Invoice(db.Model):
     code = db.Column(db.String(100))
     date = db.Column(db.DateTime, default=datetime.utcnow)
     amount = db.Column(db.Integer)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     payments = db.relationship('Payment', backref='payments_invoice', lazy='subquery')
     # fk_voyage_id = db.Column(db.Integer, db.ForeignKey('voyage.id'))
     fk_agency_id = db.Column(db.Integer, db.ForeignKey('agency.id'))
@@ -277,6 +277,7 @@ class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String(100))
     date = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by=db.Column(db.Integer, db.ForeignKey('user.id'))
     amount = db.Column(db.Integer)
     type = db.Column(db.String(100))
     fk_invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'))

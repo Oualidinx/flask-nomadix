@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms.fields.form import FormField
-
+from decimal import Decimal
 from wtforms.fields.numeric import IntegerField
 from wtforms.fields import DateField
 from wtforms.fields.simple import BooleanField
@@ -9,7 +9,8 @@ from wtforms_sqlalchemy.fields import QuerySelectField
 from wtforms.validators import ValidationError, DataRequired, EqualTo, Length, NumberRange, Optional
 from wtforms import SubmitField, StringField, PasswordField, SelectField, FieldList
 import re
-from root.models import Hotel, Bus, Guide
+from root.models import Hotel, Bus, Guide, Agency
+
 name_regex = re.compile('^[a-z A-Z]+$')
 phone_number_regex = re.compile('^[\+]?[(]?[0-9]{2}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,7}$')
 
@@ -226,7 +227,6 @@ class PersonForm(Form):
             raise ValidationError('Prénom Invalide')
 
 
-
 class Subscription(FlaskForm):
     label = StringField('Titre:')
     responsible_full_name=StringField('Nom de représentant: ', validators=[DataRequired()])
@@ -255,13 +255,14 @@ class PaymentForm(FlaskForm):
     def validate_group_id(self, group_id):
         if not group_id.data:
             raise ValidationError('Veuillez sélectionner d\'abord le group')
-        group = VoyageForAgency.query.filter_by(group_id=group_id.data).first()
+        group = Agency.query.get(group_id.data)
         if not group:
             raise ValidationError("ID group n'est pas reconnu")
 
 
     def validate_montant_verse(self, montant_verse):
-        if float(montant_verse.data)<0:
+        verse = float(Decimal(re.sub(r'[^\d.]', '', montant_verse.data)))
+        if verse<0:
             raise ValidationError('Montant verse invalide')
 
     def validate_versement(self, versement):
@@ -269,7 +270,10 @@ class PaymentForm(FlaskForm):
             raise ValidationError('Versement invalide')
 
         v_for_a = VoyageForAgency.query.filter_by(fk_agency_id=int(self.group_id.data)).first()
+
+        rest = float(Decimal(re.sub(r'[^\d.]', '', self.rest_to_pay.data)))
+        verse = float(Decimal(re.sub(r'[^\d.]', '', self.montant_verse.data)))
         if v_for_a:
-            if float(versement.data)>(float(self.rest_to_pay.data)+float(self.montant_verse.data)):
+            if float(versement.data)>(rest+verse):
                 raise ValidationError('Vérifier la valeur saisie dans ce champ')
 
