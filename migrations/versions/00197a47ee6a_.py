@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: bcbf365547d9
-Revises: 90d54b031f2d
-Create Date: 2024-11-21 10:12:42.303702
+Revision ID: 00197a47ee6a
+Revises: 
+Create Date: 2025-04-03 15:21:32.068364
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'bcbf365547d9'
-down_revision = '90d54b031f2d'
+revision = '00197a47ee6a'
+down_revision = None
 branch_labels = None
 depends_on = None
 
@@ -21,6 +21,9 @@ def upgrade():
     op.create_table('agency',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('label', sa.String(length=100), nullable=True),
+    sa.Column('responsible_full_name', sa.String(length=100), nullable=True),
+    sa.Column('code_grp', sa.String(length=50), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('is_deleted', sa.Boolean(), nullable=True),
     sa.Column('reserved_places', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
@@ -30,7 +33,13 @@ def upgrade():
     sa.Column('company', sa.String(length=100), nullable=True),
     sa.Column('driver_full_name', sa.String(length=100), nullable=True),
     sa.Column('capacity', sa.Integer(), nullable=True),
+    sa.Column('state', sa.String(length=100), nullable=True),
     sa.Column('is_deleted', sa.Boolean(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('config',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('benefice', sa.Float(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('guide',
@@ -38,6 +47,7 @@ def upgrade():
     sa.Column('name', sa.String(length=100), nullable=True),
     sa.Column('is_deleted', sa.Boolean(), nullable=True),
     sa.Column('sex', sa.String(length=10), nullable=True),
+    sa.Column('state', sa.String(length=100), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('hotel',
@@ -45,23 +55,66 @@ def upgrade():
     sa.Column('is_deleted', sa.Boolean(), nullable=True),
     sa.Column('name', sa.String(length=100), nullable=True),
     sa.Column('star_rating', sa.Integer(), nullable=True),
+    sa.Column('state', sa.String(length=100), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('user',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('first_name', sa.String(length=100), nullable=True),
+    sa.Column('last_name', sa.String(length=100), nullable=True),
+    sa.Column('role', sa.String(length=20), nullable=True),
+    sa.Column('is_deleted', sa.Boolean(), nullable=True),
+    sa.Column('password_hasChanged', sa.Boolean(), nullable=True),
+    sa.Column('username', sa.String(length=100), nullable=False),
+    sa.Column('phone_number', sa.String(length=10), nullable=True),
+    sa.Column('password_hash', sa.String(length=256), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('invoice',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('code', sa.String(length=100), nullable=True),
+    sa.Column('date', sa.DateTime(), nullable=True),
+    sa.Column('amount', sa.Integer(), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=True),
+    sa.Column('fk_agency_id', sa.Integer(), nullable=True),
+    sa.Column('invoice_type', sa.String(length=100), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['fk_agency_id'], ['agency.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('person',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('first_name', sa.String(length=100), nullable=True),
+    sa.Column('last_name', sa.String(length=100), nullable=True),
+    sa.Column('is_deleted', sa.Boolean(), nullable=True),
+    sa.Column('sexe', sa.String(length=1), nullable=True),
+    sa.Column('fk_agency_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['fk_agency_id'], ['agency.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('voyage',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('destination', sa.String(length=100), nullable=True),
     sa.Column('is_deleted', sa.Boolean(), nullable=True),
+    sa.Column('is_submitted_for_payment', sa.Boolean(), nullable=True),
+    sa.Column('subscription_due_date', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=True),
     sa.Column('date_depart', sa.DateTime(), nullable=True),
     sa.Column('date_end', sa.DateTime(), nullable=True),
     sa.Column('hotel_fees', sa.Integer(), nullable=True),
-    sa.Column('bus_company', sa.String(length=100), nullable=True),
+    sa.Column('nb_places', sa.Integer(), nullable=True),
+    sa.Column('nb_free_places', sa.Integer(), nullable=True),
     sa.Column('bus_fees', sa.Integer(), nullable=True),
     sa.Column('visa_fees', sa.Integer(), nullable=True),
     sa.Column('guide_fees', sa.Integer(), nullable=True),
-    sa.Column('avion_fees', sa.Integer(), nullable=True),
+    sa.Column('plane_fees', sa.Integer(), nullable=True),
     sa.Column('is_plane_included', sa.Boolean(), nullable=True),
     sa.Column('is_guide_included', sa.Boolean(), nullable=True),
     sa.Column('is_hotel_included', sa.Boolean(), nullable=True),
+    sa.Column('is_bus_included', sa.Boolean(), nullable=True),
+    sa.Column('is_visa_included', sa.Boolean(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('contact',
@@ -77,49 +130,12 @@ def upgrade():
     sa.Column('fk_guide_id', sa.Integer(), nullable=True),
     sa.Column('fk_hotel_id', sa.Integer(), nullable=True),
     sa.Column('fk_agency_id', sa.Integer(), nullable=True),
+    sa.Column('fk_person_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['fk_agency_id'], ['agency.id'], ),
     sa.ForeignKeyConstraint(['fk_bus_id'], ['bus.id'], ),
     sa.ForeignKeyConstraint(['fk_guide_id'], ['guide.id'], ),
     sa.ForeignKeyConstraint(['fk_hotel_id'], ['hotel.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('include',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('fk_voyage_id', sa.Integer(), nullable=True),
-    sa.Column('fk_guide_id', sa.Integer(), nullable=True),
-    sa.Column('fk_bus_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['fk_bus_id'], ['bus.id'], ),
-    sa.ForeignKeyConstraint(['fk_guide_id'], ['guide.id'], ),
-    sa.ForeignKeyConstraint(['fk_voyage_id'], ['voyage.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('invoice',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('date', sa.DateTime(), nullable=True),
-    sa.Column('amount', sa.Integer(), nullable=True),
-    sa.Column('fk_voyage_id', sa.Integer(), nullable=True),
-    sa.Column('fk_agency_id', sa.Integer(), nullable=True),
-    sa.Column('invoice_type', sa.String(length=100), nullable=True),
-    sa.ForeignKeyConstraint(['fk_agency_id'], ['agency.id'], ),
-    sa.ForeignKeyConstraint(['fk_voyage_id'], ['voyage.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('person',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('first_name', sa.String(length=100), nullable=True),
-    sa.Column('last_name', sa.String(length=100), nullable=True),
-    sa.Column('is_deleted', sa.Boolean(), nullable=True),
-    sa.Column('fk_agency_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['fk_agency_id'], ['agency.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('voyage_include',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('fk_agency_id', sa.Integer(), nullable=True),
-    sa.Column('fk_voyage_id', sa.Integer(), nullable=True),
-    sa.Column('is_totally_paid', sa.Boolean(), nullable=True),
-    sa.ForeignKeyConstraint(['fk_agency_id'], ['agency.id'], ),
-    sa.ForeignKeyConstraint(['fk_voyage_id'], ['voyage.id'], ),
+    sa.ForeignKeyConstraint(['fk_person_id'], ['person.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('entity',
@@ -134,13 +150,38 @@ def upgrade():
     sa.ForeignKeyConstraint(['fk_invoice_id'], ['invoice.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('include',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('fk_voyage_id', sa.Integer(), nullable=True),
+    sa.Column('fk_guide_id', sa.Integer(), nullable=True),
+    sa.Column('fk_bus_id', sa.Integer(), nullable=True),
+    sa.Column('fk_hotel_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['fk_bus_id'], ['bus.id'], ),
+    sa.ForeignKeyConstraint(['fk_guide_id'], ['guide.id'], ),
+    sa.ForeignKeyConstraint(['fk_hotel_id'], ['hotel.id'], ),
+    sa.ForeignKeyConstraint(['fk_voyage_id'], ['voyage.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('payment',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('code', sa.String(length=100), nullable=True),
     sa.Column('date', sa.DateTime(), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=True),
     sa.Column('amount', sa.Integer(), nullable=True),
     sa.Column('type', sa.String(length=100), nullable=True),
     sa.Column('fk_invoice_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
     sa.ForeignKeyConstraint(['fk_invoice_id'], ['invoice.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('voyage_agency',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('fk_agency_id', sa.Integer(), nullable=True),
+    sa.Column('fk_voyage_id', sa.Integer(), nullable=True),
+    sa.Column('total_paid', sa.Integer(), nullable=True),
+    sa.Column('rest_to_pay', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['fk_agency_id'], ['agency.id'], ),
+    sa.ForeignKeyConstraint(['fk_voyage_id'], ['voyage.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
@@ -148,16 +189,18 @@ def upgrade():
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('voyage_agency')
     op.drop_table('payment')
-    op.drop_table('entity')
-    op.drop_table('voyage_include')
-    op.drop_table('person')
-    op.drop_table('invoice')
     op.drop_table('include')
+    op.drop_table('entity')
     op.drop_table('contact')
     op.drop_table('voyage')
+    op.drop_table('person')
+    op.drop_table('invoice')
+    op.drop_table('user')
     op.drop_table('hotel')
     op.drop_table('guide')
+    op.drop_table('config')
     op.drop_table('bus')
     op.drop_table('agency')
     # ### end Alembic commands ###

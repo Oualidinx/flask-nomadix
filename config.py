@@ -19,10 +19,11 @@ class DevelopmentConfig(Config):
         port=5432
     )
     SQLALCHEMY_DATABASE_URI = "{driver}://{user}:{password}@{host}:{port}/{database_name}".format(**credentials)
-    print(SQLALCHEMY_DATABASE_URI)
+    # print(SQLALCHEMY_DATABASE_URI)
 
 class TestingConfig(Config):
-    pass
+    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///nomadix.sqlite'
 
 configs={
     'dev':DevelopmentConfig,
