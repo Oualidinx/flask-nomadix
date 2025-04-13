@@ -14,5 +14,5 @@ def index():
     return redirect(url_for('auth_bp.login'))
 
 
-# if __name__ == "__main__":
-#     application.run(debug=False)
+if __name__ == "__main__":
+    application.run(debug=False)
