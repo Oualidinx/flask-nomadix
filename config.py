@@ -1,5 +1,6 @@
 import os
-
+from dotenv import load_dotenv
+load_dotenv('.env')
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -14,9 +15,9 @@ class DevelopmentConfig(Config):
         driver="mysql+pymysql",  # pilote de la base de données ,  mysql ou bien postgresql
         database_name="nomadix",  # Nom de la base de donnée,
         host="localhost",
-        password="oualid_1992",  # mot de passe de la base de données,
-        user="root",
-        port=5432
+        password="",  # mot de passe de la base de données,
+        user="oualid",
+        port=3306
     )
     SQLALCHEMY_DATABASE_URI = "{driver}://{user}:{password}@{host}:{port}/{database_name}".format(**credentials)
     # print(SQLALCHEMY_DATABASE_URI)

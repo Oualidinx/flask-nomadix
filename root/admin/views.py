@@ -1,4 +1,5 @@
-import datetime
+from datetime import datetime
+
 import secrets
 
 from flask import url_for, redirect, render_template, jsonify, session, abort, request, flash
@@ -11,7 +12,40 @@ from root.models import *
 from werkzeug.security import generate_password_hash
 
 from root import database
+@admin_bp.before_request
+def update_database():
+    voyages = Voyage.query.filter(and_(Voyage.is_deleted == False,
+                                       or_(Voyage.is_submitted_for_payment == False,
+                                           Voyage.is_submitted_for_payment == None)))\
+                            .filter(Voyage.subscription_due_date<moment_to_trigger).all()
+    if len(voyages)>0:
+        for v in voyages:
+            participants = v.nb_places - v.nb_free_places
+            if participants!=0:
+                hotels = Voyage.query.get(v.id).hotels_fees if v.is_hotel_included==True else 0
+                bus = Voyage.query.get(v.id).bus_fees if v.is_bus_included==True else 0
+                guide = Voyage.query.get(v.id).guide_fees if v.is_guide_included==True else 0
+                visa = Voyage.query.get(v.id).visa_fees if v.is_visa_included==True else 0
+                plane = Voyage.query.get(v.id).plane_fees if v.is_plane_included==True else 0
 
+                benefice = (Config.query.get(1).benefice/100)
+                prix_total_achat = hotels+bus+guide+(visa*participants)+(plane*participants)
+                total_vente_total = prix_total_achat*(1+benefice)
+                price_per_place=total_vente_total/participants
+                for a in v.agencies:
+                    try:
+                        v_for_a = VoyageForAgency.query.filter(and_(VoyageForAgency.fk_voyage_id==v.id,VoyageForAgency.fk_agency_id==a.id)).first()
+                        if v_for_a:
+                            v_for_a.rest_to_pay=a.reserved_places*price_per_place
+                            v_for_a.total_paid=0
+                            database.session.add(v_for_a)
+                            database.session.commit()
+
+                    except Exception as e:
+                        database.session.rollback()
+                v.is_submitted_for_payment=True
+                database.session.add(v)
+                database.session.commit()
 @admin_bp.get('/')
 @login_required
 def index():
@@ -127,7 +161,7 @@ def register():
         html = render_template('admin/credentials.html',
                                username=session['username'],
                                password=session['password'])
-        return render_pdf(HTML(string=html), automatic_download=True, download_filename=f"password_{datetime.datetime.now().date()}.pdf")
+        return render_pdf(HTML(string=html), automatic_download=True, download_filename=f"password_{datetime.now().date()}.pdf")
     return render_template('admin/add_user.html', form=form)
 
 

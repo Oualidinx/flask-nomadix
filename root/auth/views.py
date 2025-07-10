@@ -7,7 +7,6 @@ from werkzeug.security import check_password_hash
 from root import mail, login_manager
 import os
 
-
 def send_reset_email(user, url, subject):
     user_name = os.environ.get('MAIL_USERNAME')
     if user.role!="master" and user.is_deleted==0:
@@ -39,7 +38,8 @@ def send_reset_email(user, url, subject):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
-@auth_bp.route('/login', methods=['GET', 'POST'])
+@auth_bp.get('/login')
+@auth_bp.post("/login")
 def login():
     form = LoginForm()
     """if request.method=="GET":
