@@ -9,10 +9,12 @@ load_dotenv('.env')
 application = create_app(os.environ.get('FLASK_ENV'))
 
 
-@application.route('/')
-def index():
-    return redirect(url_for('auth_bp.login'))
 
 
+@application.get("/")
+@application.get("/index")
+def myhome():
+    return redirect(url_for("auth_bp.access"))
+    
 if __name__ == "__main__":
     application.run(debug=False)

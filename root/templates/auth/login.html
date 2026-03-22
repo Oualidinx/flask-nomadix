@@ -90,8 +90,6 @@
 
 <!-- Specific Page JS goes HERE  -->
 {% block javascripts %}
-    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/toasts.js') }}"></script>
     <script>
         $(document).ready(function (){
             $('.toast').toast('show');

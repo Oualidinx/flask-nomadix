@@ -55,10 +55,6 @@ def update_database():
                     database.session.commit()
 
 with app.app_context():
-    # voyages = Voyage.query.filter(and_(Voyage.is_deleted == False, or_(Voyage.is_submitted_for_payment == False, Voyage.is_submitted_for_payment==None))) \
-    #     .filter(Voyage.subscription_due_date < moment_to_trigger).all()
-    # for v in voyages:
-    #     print(v.subscription_due_date)
     scheduler.add_job(id=f"calculer_prix_voyage", func=update_database,
                       trigger="date", run_date=dt.datetime.now())
 

@@ -10,7 +10,7 @@
     <meta name="keyword" content="Bootstrap,Admin,Template,Open,Source,jQuery,CSS,HTML,RWD,Dashboard">
     
     <title>    
-        Flask CoreUI - {% block title %}{% endblock %} | AppSeed
+        Nomadix - {% block title %}{% endblock %}
     </title>
     
     <!-- Vendors styles-->
@@ -34,7 +34,10 @@
 
     {% include 'includes/scripts.html' %} 
 
-    <!-- Specific Page JS goes HERE  -->
+    <!-- Specific Page JS goes HERE  --> 
+    
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/toasts.js') }}"></script>
     {% block javascripts %}{% endblock javascripts %}
 
   </body>

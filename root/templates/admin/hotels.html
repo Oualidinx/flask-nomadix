@@ -1,9 +1,6 @@
 {% extends "layouts/admin_home.html" %}
 
 {% block stylesheets %}
-{#	<!--<link rel="stylesheet" href="{{ url_for('static', filename='gridjs/dist/theme/mermaid.css') }}" type="text/css">-->#}
-{#    <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />#}
-    <link rel="stylesheet" href="{{ url_for('static', filename='gridjs/theme/mermaid.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendors/@coreui/icons/css/free.min.css') }}">
     <style>
         .btn-pill{
@@ -57,10 +54,6 @@
     </div>
 {% endblock %}
 {% block javascripts %}
-{#    <script src="https://cdn.jsdelivr.net/npm/gridjs@6.2.0/dist/gridjs.production.min.js"></script>#}
-    <script src="{{ url_for('static', filename='gridjs/dist/gridjs.production.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/toasts.js') }}"></script>
     <script>
         $(document).ready(function (){
             $('.toast').toast('show');

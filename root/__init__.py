@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, redirect, url_for
 
 from config import configs
 from flask_sqlalchemy import SQLAlchemy
@@ -16,7 +16,7 @@ def create_app(config_name):
 
 
     from root.admin import admin_bp
-    app.register_blueprint(admin_bp)
+    app.register_blueprint(admin_bp, name="admin_bp")
 
     from root.gestionnaire import emp_bp
     app.register_blueprint(emp_bp)
@@ -28,7 +28,7 @@ def create_app(config_name):
     app.register_blueprint(financial_bp)
 
     from root.auth import auth_bp
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp, name="auth_bp")
 
     mail.init_app(app)
     database.init_app(app)
@@ -39,5 +39,5 @@ def create_app(config_name):
     # The task scheduler
     scheduler.init_app(app)
     scheduler.start()
-
+    
     return app

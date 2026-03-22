@@ -137,12 +137,7 @@
     </div>
 {% endblock content %}
 {% block javascripts %}
-    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
     <script>
-        $(document).ready(function(){
-            $('.toast').toast('show');
-        })
         function addContact(){
             $('#myModal').modal('show');
         }

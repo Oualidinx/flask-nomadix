@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import secrets
 
@@ -10,10 +10,12 @@ from root.admin.forms import Subscription, PersonForm, RegistrationForm, HotelFo
 from flask_weasyprint import HTML, render_pdf
 from root.models import *
 from werkzeug.security import generate_password_hash
-
+from sqlalchemy.sql.operators import or_, and_
 from root import database
+
 @admin_bp.before_request
 def update_database():
+    moment_to_trigger = datetime.now()+ timedelta(seconds=120)
     voyages = Voyage.query.filter(and_(Voyage.is_deleted == False,
                                        or_(Voyage.is_submitted_for_payment == False,
                                            Voyage.is_submitted_for_payment == None)))\
@@ -46,6 +48,7 @@ def update_database():
                 v.is_submitted_for_payment=True
                 database.session.add(v)
                 database.session.commit()
+
 @admin_bp.get('/')
 @login_required
 def index():
@@ -463,9 +466,9 @@ def add_guide():
     # print(current_dir)
     os.chdir(current_dir + "/root/static/uploads")
 
-    file = open("algeria_postcodes.json", "r")
+    file = open("algeria_postcodes.json", "r", encoding='utf-8')
 
-    data = json.load(file)
+    data = json.load(file, )
     states = [(x['wilaya_name'], x['wilaya_code'] + '-' + x['wilaya_name']) for x in data]
     states = list(dict.fromkeys(states))
     os.chdir(current_dir)
