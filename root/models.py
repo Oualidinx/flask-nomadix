@@ -65,10 +65,10 @@ class Voyage(db.Model):
     is_bus_included = db.Column(db.Boolean, default=0)
     is_visa_included = db.Column(db.Boolean, default=0)
     includes = db.relationship('Include', backref="travel_include", lazy="subquery")
-    agencies = db.relationship("Agency", secondary="voyage_agency",
-                               viewonly=True,
-                            primaryjoin="Voyage.id==foreign(VoyageForAgency.fk_voyage_id)",
-                            secondaryjoin="Agency.id==foreign(VoyageForAgency.fk_agency_id)")
+    # agencies = db.relationship("Agency", secondary="voyage_agency",
+    #                            viewonly=True,
+    #                         primaryjoin="Voyage.id==foreign(VoyageForAgency.fk_voyage_id)",
+    #                         secondaryjoin="Agency.id==foreign(VoyageForAgency.fk_agency_id)")
 
     # invoices = db.relationship('Invoice', backref="voyage_invoices", lazy="subquery")
 
@@ -171,6 +171,7 @@ class Guide(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     is_deleted = db.Column(db.Boolean, default=False)
+    picture = db.Column(db.Sting(1500))
     sex = db.Column(db.String(10))
     state = db.Column(db.String(100), nullable=True)
     contacts = db.relationship('Contact', backref="guide_contact", lazy='subquery')
