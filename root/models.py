@@ -4,6 +4,7 @@ from flask_login import current_user
 from datetime import datetime
 import json
 
+
 class DateTimeEncoder(json.JSONEncoder):
     def default(self, z):
         if isinstance(z, datetime):
@@ -11,9 +12,13 @@ class DateTimeEncoder(json.JSONEncoder):
         else:
             return super().default(z)
 
+
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     benefice = db.Column(db.Float, nullable=False)
+    supplier_payment_period=db.Column(db.Float, default = 15) # days
+    balance_reminder = db.Column(db.Float, default = 7) # days
+
 
 class User(UserMixin, db.Model):
     __tablename__="user"
@@ -102,6 +107,7 @@ class Trip(db.Model):
             "places_status": ("#A6001A","Nombre de places atteint la limite") if self.nb_free_places == 0 else None,
         }
         return {key: _dict[key] for key in columns} if columns else _dict
+
 
 class Bus(db.Model):
     __tablename__="bus"
@@ -203,6 +209,10 @@ class Hotel(db.Model):
     trips = db.relationship('Trip', secondary="include", viewonly=True,
                               primaryjoin="Hotel.id == foreign(Include.fk_hotel_id)",
                               secondaryjoin="Trip.id == foreign(Include.fk_trip_id)")
+    prices = db.relationship('RoomPrices', 
+                             backref="hotel_room_prices", 
+                             lazy="subquery")
+
     def __repr__(self):
         return f'{self.name}'
 
@@ -308,6 +318,7 @@ class Person(db.Model):
     last_name = db.Column(db.String(100))
     is_deleted = db.Column(db.Boolean, default=0)
     sexe = db.Column(db.String(1))
+
     contacts = db.relationship('Contact', backref="person_contact", lazy='subquery')
     fk_agency_id = db.Column(db.Integer, db.ForeignKey('agency.id'))
 
@@ -329,15 +340,26 @@ class Include(db.Model):
     fk_trip_id = db.Column(db.Integer, db.ForeignKey('trip.id'))
     fk_guide_id = db.Column(db.Integer, db.ForeignKey('guide.id'))
     fk_bus_id = db.Column(db.Integer, db.ForeignKey('bus.id'))
-    fk_hotel_id = db.Column(db.Integer, db.ForeignKey('hotel.id'))
+    # fk_hotel_id = db.Column(db.Integer, db.ForeignKey('hotel.id'))
+    price_id = db.Column(db.Integer, db.ForeignKey('room_price.id'))
+
+
+class RoomPrice(db.Model):
+    __tablename__ = "room_price"
+    id = db.Column(db.Integer, primary_key = True)
+    type = db.Column(db.String(10))
+    price = db.Column(db.Double, default = 0)
+    hotel_id = db.Column(db.Integer, db.ForeignKey('hotel.id'))
+
 
 class TripForAgency(db.Model):
     __tablename__ = "trip_agency"
     id = db.Column(db.Integer, primary_key=True)
     fk_agency_id = db.Column(db.Integer, db.ForeignKey('agency.id'))
     fk_trip_id = db.Column(db.Integer, db.ForeignKey('trip.id'))
-    total_paid=db.Column(db.Integer, default = 0)
-    rest_to_pay=db.Column(db.Integer, default = 0)
+    total=db.Column(db.Double, default = 0)
+    rest_to_pay=db.Column(db.Double, default = 0)
+    status = db.Column(db.String(15), default = "valid")
 
     def __repr__(self, columns=None):
         return f"Groupe= {Agency.query.get(self.fk_agency_id).label} , trip = {Trip.query.get(self.fk_trip_id).destination}"
