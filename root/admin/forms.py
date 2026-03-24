@@ -9,7 +9,7 @@ from wtforms_sqlalchemy.fields import QuerySelectField
 from wtforms.validators import ValidationError, DataRequired, EqualTo, Length, NumberRange, Optional
 from wtforms import SubmitField, StringField, PasswordField, SelectField, FieldList
 import re
-from root.models import Hotel, Bus, Guide, Agency
+from root.models import Hotel, Bus, Guide, Agency, TripForAgency
 
 name_regex = re.compile('^[a-z A-Z]+$')
 phone_number_regex = re.compile('^[\+]?[(]?[0-9]{2}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,7}$')
@@ -245,7 +245,7 @@ class Subscription(FlaskForm):
         if responsible_full_name and name_regex.search(responsible_full_name.data) is None:
             raise ValidationError('Nom Invalide')
 
-from root.models import VoyageForAgency
+
 class PaymentForm(FlaskForm):
     group_id = SelectField('ID Groupe: ', validate_choice=False)
     rest_to_pay=StringField('Reste à payer (DZD) ')
@@ -269,7 +269,7 @@ class PaymentForm(FlaskForm):
         if float(versement.data)<0:
             raise ValidationError('Versement invalide')
 
-        v_for_a = VoyageForAgency.query.filter_by(fk_agency_id=int(self.group_id.data)).first()
+        v_for_a = TripForAgency.query.filter_by(fk_agency_id=int(self.group_id.data)).first()
 
         rest = float(Decimal(re.sub(r'[^\d.]', '', self.rest_to_pay.data)))
         verse = float(Decimal(re.sub(r'[^\d.]', '', self.montant_verse.data)))

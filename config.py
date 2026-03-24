@@ -9,7 +9,6 @@ class Config:
 
 class ProductionConfig(Config):
 
-    """added"""
     credentials = dict(
         driver          = "mysql+pymysql",  # pilote de la base de données ,  mysql ou bien postgresql
         database_name   = os.environ.get('database_name'),  # Nom de la base de donnée,
