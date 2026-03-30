@@ -1,18 +1,20 @@
-from flask_wtf import FlaskForm
-from wtforms.fields.form import FormField
 from decimal import Decimal
-from wtforms.fields.numeric import IntegerField
-from wtforms.fields import DateField
-from wtforms.fields.simple import BooleanField
 from wtforms.form import Form
-from wtforms_sqlalchemy.fields import QuerySelectField
-from wtforms.validators import ValidationError, DataRequired, EqualTo, Length, NumberRange, Optional
-from wtforms import SubmitField, StringField, PasswordField, SelectField, FieldList
+from wtforms.validators import EqualTo, Length, InputRequired
+from wtforms import PasswordField, SelectField, DateTimeField
 import re
-from root.models import Hotel, Bus, Guide, Agency, TripForAgency
+from root.models import Hotel, Bus, Guide, Agency, Subscription
+from root import name_regex, phone_number_regex
+from flask_wtf import FlaskForm
+from wtforms.fields.datetime import DateField, TimeField
+from wtforms.fields.numeric import IntegerField, DecimalField
+from wtforms.fields.simple import StringField, BooleanField, SubmitField
+from wtforms import FieldList, FormField
+from wtforms.validators import DataRequired, Optional, NumberRange, ValidationError
+from wtforms_sqlalchemy.fields import QuerySelectField
+from datetime import datetime
+from root.models import Guide, Bus, Hotel
 
-name_regex = re.compile('^[a-z A-Z]+$')
-phone_number_regex = re.compile('^[\+]?[(]?[0-9]{2}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,7}$')
 
 class RegistrationForm(FlaskForm):
     first_name = StringField('Nom: ', validators=[DataRequired('Champs obligatoire')])
@@ -142,38 +144,78 @@ class GuideForm(FlaskForm):
             raise ValidationError("Sélectionner la wilaya")
 
 from datetime import datetime
-class VoyagesForm(FlaskForm):
+
+
+class PickUpForm(FlaskForm):
+    ram_time = TimeField('Heure', validators=[DataRequired()])
+    label = StringField('Libellé', validators=[DataRequired()])
+    x_coordinate = StringField("Coordonné X:", validators=[DataRequired()])
+    y_coordinate = StringField("Coordonnée Y:", validators=[DataRequired()])
+    map_url = StringField("Lien de Map du Point de ramassage", validators=[DataRequired()])
+    delete_entry = SubmitField('Supprimer')
+
+class DepartureForm(FlaskForm):
+    date = DateField('Date', validators=[DataRequired()])
+    state = StringField('Wilaya: ', validators=[DataRequired()])
+    nb_places = IntegerField('Nombre de places', validators=[DataRequired()])
+    unit_price = DecimalField('Prix unitaire :',
+                              places=2,
+                              rounding = None,
+                              validators=[
+                                  DataRequired(),
+                                  NumberRange(min=0, message="Prix doit être une valeur positive")
+                              ])
+    bus_company = QuerySelectField('Bus',
+                                   allow_blank=True,
+                                   blank_text="Sélectionner le bus",
+                                   query_factory=lambda: Bus.query.filter_by(is_deleted=False).all(),
+                                   validators=[Optional()])
+    guide = QuerySelectField('Guides',
+                              allow_blank=True,
+                              blank_text="Sélectionner le guide...",
+                              query_factory=lambda: Guide.query.filter_by(is_deleted=False).all(),
+                              validators=[Optional()])
+    bus_fees = IntegerField('Frais de bus', default=0, validators=[Optional()])
+    guide_fees = IntegerField('Frais de guide', default=0, validators=[Optional()])
+    hotel = QuerySelectField("Nom de l'hôtel: ",
+                             query_factory=lambda: Hotel.query.filter_by(is_deleted=False).all(),
+                             validators=[Optional()])
+
+    pick_ups = FieldList(FormField(PickUpForm), min_entries=1, validators=[DataRequired()])
+    delete_entry = SubmitField('Supprimer')
+    add_pickup = SubmitField('Ajouter ramassage')
+class TripForm(FlaskForm):
     destination = StringField("Destination", validators=[DataRequired('Champs obligatoire')])
     date_depart = DateField('Date de la départ', validators=[DataRequired()])
     subscription_due_date=DateField('Date de clôture des inscriptions', validators=[DataRequired()])
     date_end = DateField("Date d'arrivée", validators=[DataRequired()])
-    hotel_fees = IntegerField("Frais d'hôles", default=0, validators=[Optional()])
+    # hotel_fees = IntegerField("Frais d'hôles", default=0, validators=[Optional()])
     nb_places = IntegerField("Nombre de places", default=0, validators=[DataRequired(), NumberRange(min=1, max=200)])
-    bus_company = QuerySelectField('Bus',
-                                   allow_blank=True,
-                                   blank_text="Sélectionner le bus",
-                                   query_factory=lambda : Bus.query.filter_by(is_deleted=False).all(),
-                                   validators=[Optional()])
+    # bus_company = QuerySelectField('Bus',
+    #                                allow_blank=True,
+    #                                blank_text="Sélectionner le bus",
+    #                                query_factory=lambda : Bus.query.filter_by(is_deleted=False).all(),
+    #                                validators=[Optional()])
     hotel = QuerySelectField("Nom de l'hôtel: ",
                              query_factory=lambda : Hotel.query.filter_by(is_deleted=False).all(),
                              validators=[Optional()])
-    guides = QuerySelectField('Guides',
-                              allow_blank=True,
-                              blank_text="Sélectionner le guide...",
-                              query_factory=lambda : Guide.query.filter_by(is_deleted=False).all(),
-                              validators=[Optional()])
-    bus_fees = IntegerField('Frais de bus', default=0, validators=[Optional()])
+    # guides = QuerySelectField('Guides',
+    #                           allow_blank=True,
+    #                           blank_text="Sélectionner le guide...",
+    #                           query_factory=lambda : Guide.query.filter_by(is_deleted=False).all(),
+    #                           validators=[Optional()])
+
     visa_fees =IntegerField("Frais de visa", default=0, validators=[Optional()])
-    guide_fees = IntegerField('Frais de guide', default=0, validators=[Optional()])
+    departures = FieldList(FormField(DepartureForm), validators=[DataRequired()], min_entries=1)
     avion_fees = IntegerField("Frais de billets d'avion", default=0, validators=[Optional()])
     is_plane_included = BooleanField('Le voyage inclut-il un vol en avion ?', default=False)
     is_bus_included = BooleanField('Le voyage inclut-il un bus ?', default=False)
     is_hotel_included = BooleanField('Le voyage inclut-il un hôtel ?', default = False)
     is_guide_included = BooleanField('Le voyage inclut-il un guide ?', default=False)
-
+    add_departure = SubmitField('Ajouter départ')
     submit = SubmitField('Valider')
 
-    def validate_destionation(self, destination):
+    def validate_destination(self, destination):
         if destination and name_regex.search(destination.data) is None:
             raise ValidationError('Nom Invalide')
 
@@ -201,10 +243,12 @@ class VoyagesForm(FlaskForm):
 
         if self.date_depart.data:
             if self.date_depart.data <= subscription_due_date.data:
-                raise ValidationError('Date de clôture des inscrptions non valide')
+                raise ValidationError('Date de clôture des inscriptions non valide')
         if self.date_end.data:
             if subscription_due_date.data > self.date_end.data:
-                raise ValidationError('Date de clôture des inscrptions non valide')
+                raise ValidationError('Date de clôture des inscriptions non valide')
+
+
 
 
 class PersonForm(Form):
@@ -227,13 +271,13 @@ class PersonForm(Form):
             raise ValidationError('Prénom Invalide')
 
 
-class Subscription(FlaskForm):
+class SubscriptionForm(FlaskForm):
     label = StringField('Titre:')
     responsible_full_name=StringField('Nom de représentant: ', validators=[DataRequired()])
     reserved_places = IntegerField('Nombres de places: ', validators=[DataRequired(), NumberRange(min=1)])
     phone_number = StringField('Numéro de téléphone: ', validators=[DataRequired('Champs obligatoire')])
     persons = FieldList(FormField(PersonForm), min_entries=1)
-    add = SubmitField('add new line')
+    add = SubmitField('Ajouter ligne')
     fin = SubmitField('Enregistrer')
     submit = SubmitField('Valider')
 
@@ -269,7 +313,7 @@ class PaymentForm(FlaskForm):
         if float(versement.data)<0:
             raise ValidationError('Versement invalide')
 
-        v_for_a = TripForAgency.query.filter_by(fk_agency_id=int(self.group_id.data)).first()
+        v_for_a = Subscription.query.filter_by(fk_agency_id=int(self.group_id.data)).first()
 
         rest = float(Decimal(re.sub(r'[^\d.]', '', self.rest_to_pay.data)))
         verse = float(Decimal(re.sub(r'[^\d.]', '', self.montant_verse.data)))
@@ -277,3 +321,16 @@ class PaymentForm(FlaskForm):
             if float(versement.data)>(rest+verse):
                 raise ValidationError('Vérifier la valeur saisie dans ce champ')
 
+class ConfigForm(FlaskForm):
+    benefice = DecimalField("Bénéfice (%):",places=2, rounding=None,
+                            validators=[InputRequired(),
+                                        NumberRange(min=1)])
+    supplier_payment_period = IntegerField("Rappel pour paiement fournisseur avant la date limite (jours)",
+                                           validators=[InputRequired(),
+                                                       NumberRange(min=1,
+                                                                   message="La valeur doit être au moins 1 jour")])  # days
+    balance_reminder = IntegerField("Rappel de solde avant échéance (jours)",
+                                        validators=[InputRequired(),
+                                                    NumberRange(min=1,
+                                                                message="La valeur doit être au moins 1 jour")]) # days
+    sumit = SubmitField("Enregistrer")

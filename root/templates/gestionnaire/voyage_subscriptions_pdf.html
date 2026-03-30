@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>Bon de réception {{ object['intern_reference'] }}</title>
+    <meta charset="UTF-8">
+    <style>
+        @font-face {
+            font-family: LibreBaskerville-Regular;
+            src: url('{{ url_for('static', filename="webfonts/LibreBaskerville-Regular.ttf") }}');
+        }
+        @font-face {
+            font-family: LibreBaskerville-Italic;
+            src: url('{{ url_for('static', filename="webfonts/LibreBaskerville-Italic.ttf") }}');
+        }
+        @font-face {
+            font-family: LibreBaskerville-Bold;
+            src: url('{{ url_for('static', filename="webfonts/LibreBaskerville-Bold.ttf") }}');
+        }
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        body{
+            font-family: LibreBaskerville-Regular, 'Times New Roman', Times, serif;
+        }
+        img{
+            width: 150px;
+            height: 80px;
+        }
+        table{
+
+            width: 100%;
+            border: 1px solid black;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .bordered tr td, .bordered tr th{
+            border: 1px solid black;
+            border-collapse: collapse;
+            text-align: center;
+        }
+        td{
+            padding-top: .5em ;
+        }
+
+        .title{
+            text-decoration: underline;
+            font-weight: bolder;
+            font-size: 215%;
+            font-family: LibreBaskerville-Bold, 'Times New Roman', Times, serif ;
+            text-align: justify;
+        }
+
+        span{
+            font-weight: bolder;
+            font-family: LibreBaskerville-Bold, 'Times New Roman', Times, serif;
+            padding: .5em;
+        }
+
+        .title2{
+            text-align: center;
+            font-weight: bolder;
+            font-family: LibreBaskerville-Bold, 'Times New Roman', Times, serif  ;
+            font-size: 20px;
+            text-decoration: underline;
+        }
+   </style>
+
+</head>
+<body>
+
+
+    <table>
+        <tr class="title2"><td colspan="3">LISTE DES PARTICIPANTS</td></tr>
+        <tr>
+            <td><span>Destination:</span> {{ object['destination'] }}</td>
+            <td><span>DATE DE DÉPART:</span> {{ object['date_depart'] }}</td>
+            <td><span>NOMBRE DE PERSONNES:</span> {{ nb_persons }}</td>
+    </table>
+    <table class="bordered">
+        <tr style="text-align: center;width: auto;">
+{#            <th>N°</th>#}
+            <th >Code groupe</th>
+            <th>Titre groupe</th>
+            <th>Responsable group</th>
+            <th >Nom</th>
+            <th>Prénom</th>
+            <th>Contact</th>
+            <th>sexe</th>
+        </tr>
+        {% for foo in object['agencies'] %}
+            {% for person in foo['persons'] %}
+            	<tr>
+                <td>{{ foo['code_group'] }}</td>
+                <td>{{ foo['label'] }}</td>
+                <td>{{ foo['responsible_full_name'] }}</td>
+                <td>{{ person['first_name'] }} </td>
+                <td>{{ person['last_name'] }}</td>
+                <td>{{ person['contacts'] }}</td>
+                <td>{{ person['sexe'] }}</td>
+            </tr>
+            {% endfor %}
+        {% endfor %}
+    </table>
+    <br>
+
+    <div style="width:90%; position: relative; padding-top: 10%; text-align: right;">
+        <span>CACHET ET SIGNATURE</span>
+    </div>
+
+</body>
+</html>

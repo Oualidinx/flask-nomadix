@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import secrets
 
@@ -6,7 +6,8 @@ from flask import url_for, redirect, render_template, jsonify, session, abort, r
 
 from root.admin import admin_bp
 from flask_login import login_required
-from root.admin.forms import Subscription, PersonForm, RegistrationForm, HotelForm, BusForm,GuideForm, VoyagesForm, PaymentForm
+from root.forms import PersonForm, RegistrationForm, HotelForm, \
+    BusForm,GuideForm, PaymentForm, TripForm, PickUpForm, DepartureForm
 from flask_weasyprint import HTML, render_pdf
 from root.models import *
 from werkzeug.security import generate_password_hash
@@ -16,19 +17,19 @@ from root import database
 @admin_bp.before_request
 def update_database():
     moment_to_trigger = datetime.now()+ timedelta(seconds=120)
-    voyages = Voyage.query.filter(and_(Voyage.is_deleted == False,
-                                       or_(Voyage.is_submitted_for_payment == False,
-                                           Voyage.is_submitted_for_payment == None)))\
-                            .filter(Voyage.subscription_due_date<moment_to_trigger).all()
-    if len(voyages)>0:
-        for v in voyages:
+    trips = Trip.query.filter(and_(Trip.is_deleted == False,
+                                       or_(Trip.is_submitted_for_payment == False,
+                                           Trip.is_submitted_for_payment == None)))\
+                            .filter(Trip.subscription_due_date<moment_to_trigger).all()
+    if len(trips)>0:
+        for v in trips:
             participants = v.nb_places - v.nb_free_places
             if participants!=0:
-                hotels = Voyage.query.get(v.id).hotels_fees if v.is_hotel_included==True else 0
-                bus = Voyage.query.get(v.id).bus_fees if v.is_bus_included==True else 0
-                guide = Voyage.query.get(v.id).guide_fees if v.is_guide_included==True else 0
-                visa = Voyage.query.get(v.id).visa_fees if v.is_visa_included==True else 0
-                plane = Voyage.query.get(v.id).plane_fees if v.is_plane_included==True else 0
+                hotels = Trip.query.get(v.id).hotels_fees if v.is_hotel_included==True else 0
+                bus = Trip.query.get(v.id).bus_fees if v.is_bus_included==True else 0
+                guide = Trip.query.get(v.id).guide_fees if v.is_guide_included==True else 0
+                visa = Trip.query.get(v.id).visa_fees if v.is_visa_included==True else 0
+                plane = Trip.query.get(v.id).plane_fees if v.is_plane_included==True else 0
 
                 benefice = (Config.query.get(1).benefice/100)
                 prix_total_achat = hotels+bus+guide+(visa*participants)+(plane*participants)
@@ -36,7 +37,7 @@ def update_database():
                 price_per_place=total_vente_total/participants
                 for a in v.agencies:
                     try:
-                        v_for_a = VoyageForAgency.query.filter(and_(VoyageForAgency.fk_voyage_id==v.id,VoyageForAgency.fk_agency_id==a.id)).first()
+                        v_for_a = Subscription.query.filter(and_(Subscription.fk_voyage_id==v.id,Subscription.fk_agency_id==a.id)).first()
                         if v_for_a:
                             v_for_a.rest_to_pay=a.reserved_places*price_per_place
                             v_for_a.total_paid=0
@@ -130,7 +131,7 @@ def hotels():
 @login_required
 def voyages():
     session['endpoint'] = 'voyages'
-    _voyages = Voyage.query.filter_by(is_deleted = False).all()
+    _voyages = Trip.query.filter_by(is_deleted = False).all()
     liste = list()
     if _voyages:
         for b in _voyages:
@@ -259,22 +260,22 @@ def get_hotel():
 def get_voyage():
     session['endpoint'] = 'voyages'
     data = request.json
-    v = Voyage.query.get(int(data['voyage_id']))
+    v = Trip.query.get(int(data['voyage_id']))
     if not v:
         abort(404)
-    include = Include.query.filter_by(fk_voyage_id=v.id).first()
-    if not include:
-        return render_template("errors/page-404.html", blueprint="admin_bp")
-    bus = None
-    if include.fk_bus_id:
-        bus = Bus.query.get(include.fk_bus_id)
-    else:
-        bus = "/"
-    guide = None
-    if include.fk_guide_id:
-        guide = Guide.query.get(include.fk_bus_id)
-    else:
-        guide = "/"
+    # include = Include.query.filter_by(fk_voyage_id=v.id).first()
+    # if not include:
+    #     return render_template("errors/page-404.html", blueprint="admin_bp")
+    # bus = None
+    # if include.fk_bus_id:
+    #     bus = Bus.query.get(include.fk_bus_id)
+    # else:
+    #     bus = "/"
+    # guide = None
+    # if include.fk_guide_id:
+    #     guide = Guide.query.get(include.fk_bus_id)
+    # else:
+    #     guide = "/"
 
     _dict = v.repr()
     return jsonify(
@@ -393,15 +394,16 @@ def delete_hotel(hotel_id):
 @admin_bp.get("/voyages/<int:voyage_id>/delete")
 @login_required
 def delete_voyage(voyage_id):
-    voyage = Voyage.query.get(voyage_id)
+    voyage = Trip.query.get(voyage_id)
     if not voyage:
         return render_template("errors/page-404.html", blueprint="admin_bp")
-    include=Include.query.filter_by(fk_voyage_id=voyage_id).first()
-    if not include:
-        return render_template("errors/404.html", blueprint="admin_bp")
-    database.session.delete(include)
-    database.session.commit()
-    database.session.delete(voyage)
+    # include=Include.query.filter_by(fk_voyage_id=voyage_id).first()
+    # if not include:
+    #     return render_template("errors/404.html", blueprint="admin_bp")
+    # database.session.delete(include)
+    # database.session.commit()
+    voyage.is_deleted = True
+    database.session.add(voyage)
     database.session.commit()
     flash('Suppression avec succès', 'success')
     return redirect(url_for("admin_bp.voyages"))
@@ -492,65 +494,162 @@ def add_guide():
         return redirect(url_for("admin_bp.guides"))
     return render_template('admin/new_guide.html', form = form)
 
-
-@admin_bp.get('/voyages/new')
-@admin_bp.post('/voyages/new')
+import datetime as dt
+@admin_bp.get('/trips/new')
+@admin_bp.post('/trips/new')
 @login_required
-def add_voyage():
-    form = VoyagesForm()
+def add_trip():
+    form: TripForm = TripForm()
     if form.validate_on_submit():
-        voyage = Voyage()
-        voyage.destination = form.destination.data
+        trip = Trip()
+        trip.destination = form.destination.data
+        trip.nb_places = form.nb_places.data
+        trip.nb_free_places = form.nb_places.data
+        Trip.date_depart = form.date_depart.data
+        trip.date_end = form.date_end.data
+        trip.subscription_due_date = form.subscription_due_date.data
+        trip.subscription_due_date += dt.timedelta(hours=23, minutes=59, seconds=59)
+        trip.is_bus_included = True if form.is_bus_included.data else False
+        trip.is_hotel_included = True if form.is_hotel_included.data else False
+        trip.is_plane_included = True if form.is_plane_included.data else False
+        trip.plane_fees = int(form.avion_fees.data) if form.avion_fees.data else None
+        trip.visa_fees = int(form.visa_fees.data) if form.visa_fees.data else None
+        trip.is_guide_included = True if form.is_guide_included.data else False
+        trip.created_by = current_user.id
+        pick_ups_list = list()
+        if enumerate(form.departures):
 
-        voyage.nb_places = form.nb_places.data
-        voyage.nb_free_places = form.nb_places.data
-        voyage.date_depart = form.date_depart.data
-        voyage.date_end=form.date_end.data
-        import datetime as dt
-        voyage.subscription_due_date = form.subscription_due_date.data
-        voyage.subscription_due_date += dt.timedelta(hours=23, minutes=59, seconds=59)
-        print(f'due date= {voyage.subscription_due_date}')
-        # voyage.bus_company = form.bus_company.data if form.is_bus_included.data else None
-        voyage.is_bus_included = True if form.is_bus_included.data else False
-        voyage.bus_fees = int(form.bus_fees.data) if form.is_bus_included.data else None
-        voyage.is_hotel_included = True if form.is_hotel_included.data else False
-        voyage.hotel_fees = int(form.hotel_fees.data) if form.hotel_fees.data else None
-        voyage.is_plane_included = True if form.is_plane_included.data else False
-        voyage.plane_fees= int(form.avion_fees.data) if form.avion_fees.data else None
-        voyage.visa_fees = int(form.visa_fees.data) if form.visa_fees.data else None
-        voyage.is_guide_included = True if form.is_guide_included.data else False
-        voyage.guide_fees = int(form.guide_fees.data) if form.guide_fees.data else None
-        voyage.created_by = current_user.id
-        database.session.add(voyage)
-        database.session.commit()
+            for d_index, d_entry in enumerate(form.departures):
+                _dep = Departure()
+                if d_entry.delete_entry.data:
+                    del form.departures.pick_ups.entries
+                    del form.departures.entries[d_index]
+                    return render_template(
+                        "gestionnaire/new_trip.html",
+                        form=form
+                    )
+                if d_entry.add_pickup.data:
+                    form.departures.pick_ups.append_entry()
+                    return render_template(
+                        "gestionnaire/new_trip.html",
+                        form=form,
+                        nested_pickup=PickUpForm(
+                        )
+                    )
 
-        include = Include()
-        include.fk_voyage_id=voyage.id
-        include.fk_hotel_id = form.hotel.data.id if (form.hotel.data and
-                                                       Hotel.query.get(form.hotel.data.id) and
-                                                       voyage.is_hotel_included==True) else None
-        include.fk_bus_id = form.bus_company.data.id if (form.bus_company.data
-                                                           and Bus.query.get(form.bus_company.data.id)
-                                                           and voyage.is_bus_included==True) else None
-        include.fk_guide_id = form.guides.data.id if (form.guides.data
-                                                        and  Guide.query.get(form.guides.data.id)
-                                                        and voyage.is_guide_included == True) else None
-        database.session.add(include)
+                # Create departures and store them in a single list
+                _dep.created_by = current_user.id
+                # _dep.trip_id = trip.id
+                _dep.date = d_entry.date.data
+                _dep.state = d_entry.state.data
+                _dep.nb_places = int(d_entry.nb_places.data)
+                _dep.unit_price = d_entry.unit_price.data
+
+                if enumerate(d_entry.pick_ups):
+                    for pu_index, pu_entry in enumerate(d_entry.pick_ups):
+                        if pu_entry.delete_entry.data:
+                            del pu_entry.entries[pu_index]
+                            # Create pickup and store them in a single list
+                    return render_template(
+                        "gestionnaire/new_trip.html",
+                        form=form,
+                        nested=DepartureForm()
+                    )
+                for pu_index, pu_entry in enumerate(d_entry.pick_ups):
+                    _pu = PickUp()
+                    _pu.ram_time = pu_entry.ram_time.data
+                    _pu.label = pu_entry.label.data
+                    _pu.x_coordinate = pu_entry.x_coordinate.data
+                    _pu.y_coordinate = pu_entry.y_coordinate.data
+                    _pu.map_url = pu_entry.map_url.data
+                    _pu.bus_id = pu_entry.bus_id.data
+                    _pu.guide_id = pu_entry.guide_id.data
+                    pick_ups_list.append(dict(
+                        departure=_dep,
+                        pick_up=_pu
+                    ))
+
+        # add more departures
+        if form.add_departure.data:
+            form.departures.append_entry()
+            return render_template(
+                "gestionnaire/new_trip.html",
+                form=form,
+                nested=DepartureForm()
+            )
+        database.session.add(trip)
         database.session.commit()
-        flash('Operation terminée avec succès','success')
-        return redirect(url_for("admin_bp.voyages"))
-    return render_template("admin/new_voyages.html", form=form)
+        for entry in pick_ups_list:
+            database.session.add(entry['departure'])
+            for pu in entry['pick_ups']:
+                pu.departure_id = entry['departure'].id
+                pu.trip_id = trip.id
+                database.session.add(entry['pick_up'])
+
+        database.session.commit()
+        flash('Operation terminée avec succès', 'success')
+        return redirect(url_for("emp_bp.add_trip"))
+    return render_template("gestionnaire/new_trip.html", form=form)
+
+
+# @admin_bp.get('/voyages/new')
+# @admin_bp.post('/voyages/new')
+# @login_required
+# def add_voyage():
+#     form = VoyagesForm()
+#     if form.validate_on_submit():
+#         trip = Trip()
+#         trip.destination = form.destination.data
+#
+#         trip.nb_places = form.nb_places.data
+#         trip.nb_free_places = form.nb_places.data
+#         trip.date_depart = form.date_depart.data
+#         trip.date_end=form.date_end.data
+#         import datetime as dt
+#         trip.subscription_due_date = form.subscription_due_date.data
+#         trip.subscription_due_date += dt.timedelta(hours=23, minutes=59, seconds=59)
+#         print(f'due date= {Trip.subscription_due_date}')
+#         # Trip.bus_company = form.bus_company.data if form.is_bus_included.data else None
+#         trip.is_bus_included = True if form.is_bus_included.data else False
+#         trip.bus_fees = int(form.bus_fees.data) if form.is_bus_included.data else None
+#         trip.is_hotel_included = True if form.is_hotel_included.data else False
+#         trip.hotel_fees = int(form.hotel_fees.data) if form.hotel_fees.data else None
+#         trip.is_plane_included = True if form.is_plane_included.data else False
+#         trip.plane_fees= int(form.avion_fees.data) if form.avion_fees.data else None
+#         trip.visa_fees = int(form.visa_fees.data) if form.visa_fees.data else None
+#         trip.is_guide_included = True if form.is_guide_included.data else False
+#         trip.guide_fees = int(form.guide_fees.data) if form.guide_fees.data else None
+#         trip.created_by = current_user.id
+#         database.session.add(trip)
+#         database.session.commit()
+#
+#         include = Include()
+#         include.fk_voyage_id=Trip.id
+#         include.fk_hotel_id = form.hotel.data.id if (form.hotel.data and
+#                                                        Hotel.query.get(form.hotel.data.id) and
+#                                                        Trip.is_hotel_included==True) else None
+#         include.fk_bus_id = form.bus_company.data.id if (form.bus_company.data
+#                                                            and Bus.query.get(form.bus_company.data.id)
+#                                                            and Trip.is_bus_included==True) else None
+#         include.fk_guide_id = form.guides.data.id if (form.guides.data
+#                                                         and  Guide.query.get(form.guides.data.id)
+#                                                         and Trip.is_guide_included == True) else None
+#         database.session.add(include)
+#         database.session.commit()
+#         flash('Operation terminée avec succès','success')
+#         return redirect(url_for("admin_bp.voyages"))
+#     return render_template("admin/new_voyages.html", form=form)
 
 
 @admin_bp.get('/voyages/<int:voyage_id>/subscription')
 @admin_bp.post('/voyages/<int:voyage_id>/subscription')
 @login_required
 def subscription(voyage_id):
-    voyage = Voyage.query.filter_by(is_deleted=False).filter_by(id=voyage_id).first()
+    voyage = Trip.query.filter_by(is_deleted=False).filter_by(id=voyage_id).first()
     if not voyage:
         return render_template('errors/404.html', blueprint="admin_bp")
 
-    if voyage.subscription_due_date < datetime.now():
+    if Trip.subscription_due_date < datetime.now():
         flash("Inscription fermé, vous ne pouvez pas procèder d'autres", "warning")
         return redirect(url_for("admin_bp.voyages"))
     form=Subscription()
@@ -558,7 +657,7 @@ def subscription(voyage_id):
         agency = Agency()
         agency.label = form.label.data
         agency.reserved_places = form.reserved_places.data
-        if agency.reserved_places > voyage.nb_free_places:
+        if agency.reserved_places > Trip.nb_free_places:
             flash('Le nombre de places n\'est pas suffisant pour ce group', 'danger')
             return render_template('admin/subscription.html',
                                         form=form,
@@ -604,8 +703,8 @@ def subscription(voyage_id):
         contact.fk_agency_id = agency.id
         database.session.add(contact)
         database.session.commit()
-        v_for_a = VoyageForAgency()
-        last_v = VoyageForAgency.query.order_by(VoyageForAgency.id.desc()).limit(1).first().code_grp
+        v_for_a = Subscription()
+        last_v = Subscription.query.order_by(Subscription.id.desc()).limit(1).first().code_grp
         last_code = last_v
         last_code = last_code.split("/")
         if len(last_code[1]) == '':
@@ -613,11 +712,11 @@ def subscription(voyage_id):
         else:
             last_v = last_v+str(int(last_code[1])+1)
         v_for_a.code_grp = last_v
-        v_for_a.fk_voyage_id = voyage.id
+        v_for_a.fk_voyage_id = Trip.id
         v_for_a.fk_agency_id=agency.id
         database.session.add(v_for_a)
         database.session.commit()
-        voyage.nb_free_places = voyage.nb_free_places - agency.reserved_places
+        Trip.nb_free_places = Trip.nb_free_places - agency.reserved_places
         database.session.add(voyage)
         i = 0
         for e in entities:
@@ -648,7 +747,8 @@ def payments():
 @admin_bp.get('/voyage/<int:voyage_id>/print')
 @login_required
 def print_list(voyage_id):
-    _order = Voyage.query.get(voyage_id)
+    """Print the list of all clients engaged in the trip"""
+    _order = Trip.query.get(voyage_id)
     if not _order or _order.is_deleted:
         return render_template("errors/404.html", blueprint="admin_bp")
 
@@ -658,13 +758,13 @@ def print_list(voyage_id):
                          columns_for_persons=['first_name','last_name','sexe','contacts'])
     # _objects = objects
     # for agency in objects['agencies']:
-    #     v_for_a = VoyageForAgency.query.get(agency['id'])
+    #     v_for_a = Subscription.query.get(agency['id'])
     #     if v_for_a.rest_to_pay!=0:
     #         _objects['agencies'].remove(agency)
     nb_persons = 0
     for agency in objects['agencies']:
         nb_persons += len(agency['persons'])
-    html = render_template('admin/voyage_subscriptions_pdf.html',
+    html = render_template('gestionnaire/voyage_subscriptions_pdf.html',
                            object=objects,
                            nb_persons = nb_persons,
                            titre="Liste des participants"
@@ -677,7 +777,7 @@ def print_list(voyage_id):
 @admin_bp.get('/print/<int:_id>')
 @login_required
 def print_voyage(_id):
-    _order = VoyageForAgency.query.get(_id)
+    _order = Subscription.query.get(_id)
     if not _order:
         return render_template("errors/404.html", blueprint="admin_bp")
     object = _order.repr(columns_voyage=['destination', 'date_depart'],
@@ -694,15 +794,15 @@ def print_voyage(_id):
 @admin_bp.get('/subscription/<int:voyage_id>')
 @login_required
 def subscriptions(voyage_id):
-    voyage = Voyage.query.get(voyage_id)
-    if not voyage or voyage.is_deleted==True:
+    voyage = Trip.query.get(voyage_id)
+    if not voyage or Trip.is_deleted==True:
         return render_template("errors/404.html", blueprint="admin_bp")
-    print(f'les groupe de ce voyage:::: {len(voyage.agencies)}')
-    v_for_a = VoyageForAgency.query.filter_by(fk_voyage_id = voyage_id).all()
+    print(f'les groupe de ce voyage:::: {len(Trip.agencies)}')
+    v_for_a = Subscription.query.filter_by(fk_voyage_id = voyage_id).all()
     if not v_for_a:
         return render_template("errors/404.html", blueprint="admin_bp")
 
-    return render_template("admin/voyage_subscriptions.html", object=voyage.repr(['destination','id','agencies']))
+    return render_template("admin/voyage_subscriptions.html", object=Trip.repr(['destination','id','agencies']))
 
 
 @admin_bp.get('/new_pay')
@@ -717,13 +817,13 @@ from num2words import num2words as nw
 @login_required
 def pay(v_id):
     form = PaymentForm()
-    voyage = Voyage.query.get(v_id)
+    voyage = Trip.query.get(v_id)
     if not voyage:
         return render_template("errors/404.html", blueprint="admin_bp")
-    form.group_id.choices = [(None, 'Sélectionner le groupe')]+[(x.id, f'{x.code_grp}, {x.responsible_full_name}') for x in voyage.agencies]
+    form.group_id.choices = [(None, 'Sélectionner le groupe')]+[(x.id, f'{x.code_grp}, {x.responsible_full_name}') for x in Trip.agencies]
 
     if form.validate_on_submit():
-        v_for_a = VoyageForAgency.query.filter_by(fk_agency_id=int(form.group_id.data)).first()
+        v_for_a = Subscription.query.filter_by(fk_agency_id=int(form.group_id.data)).first()
     # try:
         v_for_a.rest_to_pay = v_for_a.rest_to_pay - float(form.versement.data)
         v_for_a.total_paid = v_for_a.total_paid + float(form.versement.data)
@@ -737,7 +837,7 @@ def pay(v_id):
         html = render_template('admin/payment_pdf.html',
                                current_employee=f"{str.upper(current_user.first_name)} {current_user.last_name}",
                                today=datetime.now().date(),
-                               destination=voyage.destination,
+                               destination=Trip.destination,
                                responsable_group=Agency.query.get(int(form.group_id.data)).responsible_full_name,
                                cost_paid="{:,.2f}".format(float(form.versement.data)),
                                total_letters = total_letters
@@ -749,7 +849,7 @@ def pay(v_id):
         database.session.add(payment)
         database.session.commit()
         return render_pdf(HTML(string=html),
-                               download_filename=f'payment_{Agency.query.get(int(form.group_id.data)).code_grp}_{voyage.destination}.pdf',
+                               download_filename=f'payment_{Agency.query.get(int(form.group_id.data)).code_grp}_{Trip.destination}.pdf',
                                automatic_download=True)
     # except Exception as e:
     #     database.session.rollback()
@@ -768,7 +868,7 @@ def get_costs():
     if not agency:
         abort(404)
 
-    v_for_a = VoyageForAgency.query.filter_by(fk_agency_id=int(agency.id)).first()
+    v_for_a = Subscription.query.filter_by(fk_agency_id=int(agency.id)).first()
     if v_for_a:
         items ={
             'rest_to_pay':"{:,.2f}".format(v_for_a.rest_to_pay),

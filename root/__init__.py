@@ -1,4 +1,6 @@
-from flask import Flask, redirect, url_for
+from flask import Flask
+
+import re
 
 from config import configs
 from flask_sqlalchemy import SQLAlchemy
@@ -11,6 +13,9 @@ database = SQLAlchemy()
 mail = Mail()
 login_manager = LoginManager()
 scheduler = APScheduler()
+name_regex = re.compile('^[a-z A-Z]+$')
+phone_number_regex = re.compile('^[\+]?[(]?[0-9]{2}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,7}$')
+
 def create_app(config_name):
     app.config.from_object(configs[config_name])
 

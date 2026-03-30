@@ -14,6 +14,7 @@ class DateTimeEncoder(json.JSONEncoder):
 
 
 class Config(db.Model):
+    __tablename__ = "config"
     id = db.Column(db.Integer, primary_key=True)
     benefice = db.Column(db.Float, nullable=False)
     supplier_payment_period=db.Column(db.Float, default = 15) # days
@@ -76,7 +77,7 @@ class Trip(db.Model):
     #                         secondaryjoin="Agency.id==foreign(TripForAgency.fk_agency_id)")
 
     # invoices = db.relationship('Invoice', backref="trip_invoices", lazy="subquery")
-
+    departures = db.relationship('Depart')
 
     def repr(self, columns=None, columns_for_agencies=None, columns_for_persons=None):
         _dict={
@@ -118,9 +119,9 @@ class Bus(db.Model):
     state = db.Column(db.String(100), nullable = True)
     is_deleted = db.Column(db.Boolean, default=0)
     contacts = db.relationship('Contact', backref="bus_contact", lazy='subquery')
-    trips = db.relationship('Trip', secondary="include",viewonly=True,
-                            primaryjoin="Bus.id == foreign(Include.fk_bus_id)",
-                            secondaryjoin="Trip.id == foreign(Include.fk_trip_id)")
+    # trips = db.relationship('Trip', secondary="include",viewonly=True,
+    #                         primaryjoin="Bus.id == foreign(Include.fk_bus_id)",
+    #                         secondaryjoin="Trip.id == foreign(Include.fk_trip_id)")
     def __repr__(self):
         return f'{self.company}'
 
@@ -206,9 +207,9 @@ class Hotel(db.Model):
     contacts = db.relationship('Contact', backref="hotel_contact", lazy='subquery')
     star_rating = db.Column(db.Integer, default=0)
     state = db.Column(db.String(100))
-    trips = db.relationship('Trip', secondary="include", viewonly=True,
-                              primaryjoin="Hotel.id == foreign(Include.fk_hotel_id)",
-                              secondaryjoin="Trip.id == foreign(Include.fk_trip_id)")
+    # trips = db.relationship('Trip', secondary="include", viewonly=True,
+    #                           primaryjoin="Hotel.id == foreign(Include.fk_hotel_id)",
+    #                           secondaryjoin="Trip.id == foreign(Include.fk_trip_id)")
     prices = db.relationship('RoomPrices', 
                              backref="hotel_room_prices", 
                              lazy="subquery")
@@ -334,14 +335,13 @@ class Person(db.Model):
         return {c:_dict[c] for c in columns} if columns else _dict
 
 
-class Include(db.Model):
-    __tablename__ = "include"
-    id = db.Column(db.Integer, primary_key=True)
-    fk_trip_id = db.Column(db.Integer, db.ForeignKey('trip.id'))
-    fk_guide_id = db.Column(db.Integer, db.ForeignKey('guide.id'))
-    fk_bus_id = db.Column(db.Integer, db.ForeignKey('bus.id'))
-    # fk_hotel_id = db.Column(db.Integer, db.ForeignKey('hotel.id'))
-    price_id = db.Column(db.Integer, db.ForeignKey('room_price.id'))
+# class Include(db.Model):
+#     __tablename__ = "include"
+#     id = db.Column(db.Integer, primary_key=True)
+#     fk_trip_id = db.Column(db.Integer, db.ForeignKey('trip.id'))
+#     # fk_guide_id = db.Column(db.Integer, db.ForeignKey('guide.id'))
+#     # fk_bus_id = db.Column(db.Integer, db.ForeignKey('bus.id'))
+#     price_id = db.Column(db.Integer, db.ForeignKey('room_price.id'))
 
 
 class RoomPrice(db.Model):
@@ -352,14 +352,17 @@ class RoomPrice(db.Model):
     hotel_id = db.Column(db.Integer, db.ForeignKey('hotel.id'))
 
 
-class TripForAgency(db.Model):
-    __tablename__ = "trip_agency"
+class Subscription(db.Model):
+    __tablename__ = "subscription"
     id = db.Column(db.Integer, primary_key=True)
-    fk_agency_id = db.Column(db.Integer, db.ForeignKey('agency.id'))
+    fk_agency_id = db.Column(db.Integer, db.ForeignKey('agency.id')) # Client
     fk_trip_id = db.Column(db.Integer, db.ForeignKey('trip.id'))
-    total=db.Column(db.Double, default = 0)
+    total_to_pay=db.Column(db.Double, default = 0)
     rest_to_pay=db.Column(db.Double, default = 0)
-    status = db.Column(db.String(15), default = "valid")
+    status = db.Column(db.String(15), default = "")
+    refund = db.Column(db.Double, default = 0)
+    price_id  = db.Column(db.Integer, db.ForeignKey('room_price.id'))
+
 
     def __repr__(self, columns=None):
         return f"Groupe= {Agency.query.get(self.fk_agency_id).label} , trip = {Trip.query.get(self.fk_trip_id).destination}"
@@ -385,21 +388,49 @@ class Entity(db.Model):
     def __repr__(self):
         return f'{self.label}, {self.montants}, {self.unit}, {self.quantity}, {self.total_amount}'
 
-
-class Depart(db.Model):
-    __tablename__ = "depart"
+class Departure(db.Model):
+    __tablename__ = "departure"
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime, nullable = False)
+    state = db.Column(db.String(150))
     nb_places = db.Column(db.Integer, default = 0)
-    unit_price = db.Column(db.Double, default = 0)
+    unit_price = db.Column(db.Numeric(precision = 10 , scale = 2), default = 0)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     trip_id = db.Column(db.Integer, db.ForeignKey('trip.id'))
 
+    def to_dict(self):
+        return dict(
+            id=self.id,
+            date=self.date.strftime("%Y-%m-%d"),
+            nb_places=self.nb_places,
+            unit_price=self.unit_price,
+            created_by=f'{User.query.get(self.created_by).first_name} {User.query.get(self.created_by).last_name}',
+            trip_id=Trip.query.get(self.trip_id).destination or "NA"
+        )
 
-class Ramassage(db.Model):
+class PickUp(db.Model):
+    __tablename__ = "pickup"
     id = db.Column(db.Integer, primary_key = True)
-    ram_datetime = db.Column(db.DateTime, nullable = False)
+    ram_time = db.Column(db.Time, nullable = False)
+    label = db.Column(db.String(150))
+    x_coordinate = db.Column(db.Double, default = 0)
+    y_coordinate = db.Column(db.Double, default = 0)
+    map_url = db.Column(db.String(150), nullable = True)
     bus_id = db.Column(db.Integer, db.ForeignKey('bus.id'))
     guide_id = db.Column(db.Integer, db.ForeignKey('guide.id'))
+    departure_id = db.Column(db.Integer, db.ForeignKey('departure.id'))
     trip_id = db.Column(db.Integer, db.ForeignKey('trip.id'))
 
+    def to_dict(self):
+        return dict(
+            id=self.id,
+            ram_datetime=self.ram_datetime.strftime("%Y-%m-%d"),
+            label=self.label,
+            state=self.state,
+            x_coordinate=self.x_coordinate,
+            y_coordinate=self.y_coordinate,
+            bus_id=Bus.query.get(self.bus_id).label,
+            guide_id=Guide.query.get(self.guide_id).name,
+            departure=self.departure.to_dict(),
+            trip_id=Trip.query.get(self.trip_id).destination,
+        )
