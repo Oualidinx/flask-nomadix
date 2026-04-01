@@ -1,20 +1,18 @@
-from decimal import Decimal
-from wtforms.form import Form
-from wtforms.validators import EqualTo, Length, InputRequired
-from wtforms import PasswordField, SelectField, DateTimeField
 import re
-from root.models import Hotel, Bus, Guide, Agency, Subscription
-from root import name_regex, phone_number_regex
+from decimal import Decimal
+
 from flask_wtf import FlaskForm
+from wtforms import FieldList, FormField, PasswordField, SelectField
 from wtforms.fields.datetime import DateField, TimeField
 from wtforms.fields.numeric import IntegerField, DecimalField
 from wtforms.fields.simple import StringField, BooleanField, SubmitField
-from wtforms import FieldList, FormField
-from wtforms.validators import DataRequired, Optional, NumberRange, ValidationError
+from wtforms.form import Form
+from wtforms.validators import DataRequired, Optional, NumberRange, ValidationError, \
+                                EqualTo, Length, InputRequired
 from wtforms_sqlalchemy.fields import QuerySelectField
-from datetime import datetime
-from root.models import Guide, Bus, Hotel
 
+from root import name_regex, phone_number_regex
+from root.models import Agency, Booking,Guide, Bus, Hotel
 
 class RegistrationForm(FlaskForm):
     first_name = StringField('Nom: ', validators=[DataRequired('Champs obligatoire')])
@@ -76,7 +74,7 @@ class ContactForm(FlaskForm):
 
 class HotelForm(FlaskForm):
     name =StringField('Nom: ', validators=[DataRequired('Champs obligatoire')])
-    star_rating = IntegerField('Rating: ', validators=[DataRequired()])
+    star_rating = IntegerField('Classment: ', validators=[DataRequired()])
     phone_number = StringField("Numéro de téléphone: ",
                                validators=[DataRequired('Champs obligatoire'), Length(min=9, max=10)])
     state = StringField('Ville: ', validators=[DataRequired('Champs obligatoire')])
@@ -114,7 +112,7 @@ class BusForm(FlaskForm):
         if phone_number and phone_number_regex.search(phone_number.data) is None:
             raise ValidationError('Numéro invalide')
 
-from root.models import User, Contact
+from root.models import Contact
 class GuideForm(FlaskForm):
     full_name = StringField('Nom complet: ', validators=[DataRequired('Champs obligatoire')])
     sex = SelectField('Genre: ', choices=[(None,'Sélectionner ...'),('homme', 'Homme'), ('femme', 'Fêmme')], validators=[DataRequired()])
@@ -184,6 +182,7 @@ class DepartureForm(FlaskForm):
     pick_ups = FieldList(FormField(PickUpForm), min_entries=1, validators=[DataRequired()])
     delete_entry = SubmitField('Supprimer')
     add_pickup = SubmitField('Ajouter ramassage')
+
 class TripForm(FlaskForm):
     destination = StringField("Destination", validators=[DataRequired('Champs obligatoire')])
     date_depart = DateField('Date de la départ', validators=[DataRequired()])
@@ -313,7 +312,7 @@ class PaymentForm(FlaskForm):
         if float(versement.data)<0:
             raise ValidationError('Versement invalide')
 
-        v_for_a = Subscription.query.filter_by(fk_agency_id=int(self.group_id.data)).first()
+        v_for_a = Booking.query.filter_by(fk_agency_id=int(self.group_id.data)).first()
 
         rest = float(Decimal(re.sub(r'[^\d.]', '', self.rest_to_pay.data)))
         verse = float(Decimal(re.sub(r'[^\d.]', '', self.montant_verse.data)))

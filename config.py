@@ -1,10 +1,12 @@
 import os
-# from dotenv import load_dotenv
-# load_dotenv('.env')
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    @staticmethod
+    def init():
+        pass
 
 
 class ProductionConfig(Config):
@@ -33,6 +35,9 @@ class DevelopmentConfig(Config):
     # print(SQLALCHEMY_DATABASE_URI)
 
 class TestingConfig(Config):
+    TESTING = True
+    SECRET_KEY = 'FVZBVIjCr_tmGd99dNZEbd9xp9KGe6iuh9U0kBzh6p4oQFSu8jLLe2J3WdfO3HIdnbr1vNhjGcgprT4bJg1kmQ'
+    WTF_CSRF_ENABLED=True
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///nomadix.sqlite'
 
@@ -41,5 +46,3 @@ configs={
     'test':TestingConfig,
     'prod':ProductionConfig
 }
-
-

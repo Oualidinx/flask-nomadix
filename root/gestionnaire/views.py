@@ -1,7 +1,7 @@
 from  . import emp_bp
 from flask import flash, redirect, url_for, render_template, session, abort, request, jsonify
 from flask_login import login_required, current_user
-from root.models import Trip, Guide, Bus, Departure, Subscription
+from root.models import Trip, Guide, Bus, Departure, Booking
 from root.forms import TripForm, DepartureForm, PickUpForm
 from root import database
 
@@ -153,7 +153,7 @@ def subscriptions(voyage_id):
     voyage = Trip.query.get(voyage_id)
     if not voyage or Trip.is_deleted==True:
         return render_template("errors/404.html", blueprint="emp_bp")
-    v_for_a = Subscription.query.filter_by(fk_voyage_id = voyage_id).all()
+    v_for_a = Booking.query.filter_by(fk_voyage_id = voyage_id).all()
     if not v_for_a:
         return render_template("errors/404.html", blueprint="emp_bp")
 

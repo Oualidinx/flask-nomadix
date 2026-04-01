@@ -1,0 +1,23 @@
+<!-- templates/modals/booking_detail.html -->
+<div class="modal fade" id="dynamicModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Booking #{{ booking['id'] }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p><strong>Cancellation status:</strong> {{ booking['status'] }}</p>
+                <p><strong>Total:</strong> {{ "{:,.2f}".format(booking['total_to_pay']) }} DZD</p>
+                <p><strong>Rest:</strong> {{ "{:,.2f}".format(booking['rest_to_pay']) }} DZD</p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+
+        </div>
+    </div>
+</div>

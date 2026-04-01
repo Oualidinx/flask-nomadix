@@ -11,9 +11,9 @@ import os
 def load_user(user_id):
     return User.query.get(user_id)
     
-@auth_bp.get('/access')
-@auth_bp.post('/access')
-def access():
+@auth_bp.get('/')
+@auth_bp.post('/login')
+def login():
     form = LoginForm()
     """if request.method=="GET":
         if 'new_reg' in session:

@@ -1,0 +1,33 @@
+<div class="modal fade" id="dynamicModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Guide #{{ guide['id'] }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal">
+
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <p><strong>Nom:</strong> {{ guide['name'] }}</p>
+                <p><strong>Genre:</strong> {{ guide['sex'] }} </p>
+                <p><strong>Wilaya:</strong> {{ guide['state'] }}</p>
+                <p><strong>Nombre de voyages déjà fait:</strong> {{ guide['#trips'] }}</p>
+                <h4>Contacts:</h4>
+{#            {{ guide['contacts'] }}#}
+                <ol>
+                    {% for contact in guide['contacts'] %}
+                         <li><strong>{{ contact['phone'] }}</strong></li>
+                    {% endfor %}
+                </ol>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,36 @@
+<div class="modal fade" id="dynamicModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Bus #{{ bus['id'] }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal">
+
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <p><strong>Nom du conducteur:</strong> {{ bus['driver_full_name'] }}</p>
+                <p><strong>Nombre de places disponibles:</strong> {{ bus['capacity'] }} </p>
+                <p><strong>Société:</strong> {{ bus['company'] }}</p>
+{#                <p><strong>Nombre de voyages déjà fait:</strong> {{ bus['#trips'] }}</p>#}
+                <h4>Contacts:</h4>
+{#            {{ bus['contacts'] }}#}
+                <ol>
+                    {% for contact in bus['contacts'] %}
+                         <li><strong>{{ contact['phone'] }}</strong></li>
+                    {% endfor %}
+                </ol>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+{#                <button type="button" class="btn btn-secondary"#}
+{#                        data-modal-delete="{{ url_for('financial_bp.delete_bus', bus_id=bus['id'] ) }}">Supprimer</button>#}
+{#                <button type="button" class="btn btn-secondary">Fermer</button>#}
+            </div>
+
+        </div>
+    </div>
+</div>

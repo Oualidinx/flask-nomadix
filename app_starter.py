@@ -11,11 +11,12 @@ from dotenv import load_dotenv
 from root import scheduler
 
 load_dotenv('.env')
+print(os.environ.get('FLASK_ENV'))
 app = create_app(os.environ.get('FLASK_ENV'))
-app.config.update(dict(
-        MAIL_USERNAME=os.environ.get('MAIL_USERNAME'),
-        MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    ))
+# app.config.update(dict(
+#         MAIL_USERNAME=os.environ.get('MAIL_USERNAME'),
+#         MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+#     ))
 migrate = Migrate(app=app, db=database)
 # moment_to_trigger = dt.datetime.now()+dt.timedelta(seconds=120)
 
@@ -58,12 +59,17 @@ migrate = Migrate(app=app, db=database)
 #     scheduler.add_job(id=f"calculer_prix_voyage", func=update_database,
 #                       trigger="date", run_date=dt.datetime.now())
 
-@app.route('/')
-def index():
-    return redirect(url_for('auth_bp.login'))
+# @app.route('/')
+# def index():
+#     return redirect(url_for('auth_bp.login'))
 
 @app.shell_context_processor
 def make_shell_context():
     return dict(app=app,
                 db=database
                 )
+
+
+@app.route('/')
+def index():
+    return redirect(url_for("auth_bp.login"))

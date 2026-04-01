@@ -47,6 +47,8 @@
                               <div class="modal-body"></div></div></div></div></div></div></div>
 {% endblock %}
 {% block javascripts %}
+    <script src="{{ url_for('static', filename='gridjs/dist/gridjs.production.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     <script>
         $(document).ready(function (){
             $('.toast').toast('show');

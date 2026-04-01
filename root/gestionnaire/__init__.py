@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-emp_bp = Blueprint('emp_bp', __name__)
+emp_bp = Blueprint('emp_bp', __name__, url_prefix='/gestionnaire')
 
-from root.gestionnaire import views
+from . import views

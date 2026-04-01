@@ -30,7 +30,7 @@ Mako
 MarkupSafe
 num2words
 packaging
-pillow
+Pillow>=10.3.0
 pycparser
 pydyf
 PyJWT
@@ -49,3 +49,4 @@ wtforms
 WTForms-SQLAlchemy
 zipp
 zopfli
+brotli>=1.2.0

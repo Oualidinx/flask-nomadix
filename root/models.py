@@ -19,6 +19,7 @@ class Config(db.Model):
     benefice = db.Column(db.Float, nullable=False)
     supplier_payment_period=db.Column(db.Float, default = 15) # days
     balance_reminder = db.Column(db.Float, default = 7) # days
+    cancellation_fee = db.Column(db.Float, default = 0)
 
 
 class User(UserMixin, db.Model):
@@ -70,14 +71,25 @@ class Trip(db.Model):
     is_hotel_included = db.Column(db.Boolean, default=0)
     is_bus_included = db.Column(db.Boolean, default=0)
     is_visa_included = db.Column(db.Boolean, default=0)
-    includes = db.relationship('Include', backref="travel_include", lazy="subquery")
+    # includes = db.relationship('Include', backref="travel_include", lazy="subquery")
     # agencies = db.relationship("Agency", secondary="trip_agency",
     #                            viewonly=True,
     #                         primaryjoin="trip.id==foreign(TripForAgency.fk_trip_id)",
     #                         secondaryjoin="Agency.id==foreign(TripForAgency.fk_agency_id)")
 
     # invoices = db.relationship('Invoice', backref="trip_invoices", lazy="subquery")
-    departures = db.relationship('Depart')
+    departures = db.relationship('Departure',backref="trip_departures", lazy='subquery')
+    confirmed_bookings = db.relationship('Booking',
+                                         viewonly=True,
+                                         primaryjoin="and_(Booking.fk_trip_id == Trip.id, Booking.is_confirmed)")
+    cancelled_bookings = db.relationship('Booking',
+                                         backref="cancelled_trip_bookings",
+                                         primaryjoin = "and_(Booking.fk_trip_id==Trip.id, Booking.status=='cancelled')", viewonly=True)
+    pending_bookings = db.relationship('Booking',
+                                       backref="pending_trip_bookings",
+                                       primaryjoin="and_(Booking.fk_trip_id==Trip.id, "
+                                                      "Booking.status=='pending')",
+                                       viewonly=True)
 
     def repr(self, columns=None, columns_for_agencies=None, columns_for_persons=None):
         _dict={
@@ -90,14 +102,14 @@ class Trip(db.Model):
             "date_end":self.date_end.date(),
             "nb_places":self.nb_places,
             "nb_free_places":self.nb_free_places,
-            "hotel_fees":"{:,.2f}".format(self.hotel_fees) if self.is_hotel_included else 0,
-            "bus_company": Bus.query.get(self.includes[0].fk_bus_id) if len(self.includes)>0 and self.includes[0].fk_bus_id else "",
-            "bus_fees":"{:,.2f}".format(self.bus_fees) if self.is_bus_included else 0,
-            "visa_fees":"{:,.2f}".format(self.visa_fees) if self.is_visa_included else 0,
-            "guide_fees":"{:,.2f}".format(self.guide_fees) if self.is_guide_included else 0,
-            "guide_full_name":Guide.query.get(self.includes[0].fk_guide_id) if len(self.includes) > 0 and self.includes[0].fk_guide_id else "",
-            "hotel_name":Hotel.query.get(self.includes[0].fk_hotel_id) if len(self.includes) > 0 and self.includes[0].fk_hotel_id else "",
-            "plane_fees":"{:,.2f}".format(self.plane_fees) if self.is_plane_included else 0,
+            # "hotel_fees":"{:,.2f}".format(self.hotel_fees) if self.is_hotel_included else 0,
+            # "bus_company": Bus.query.get(self.includes[0].fk_bus_id) if len(self.includes)>0 and self.includes[0].fk_bus_id else "",
+            # "bus_fees":"{:,.2f}".format(self.bus_fees) if self.is_bus_included else 0,
+            # "visa_fees":"{:,.2f}".format(self.visa_fees) if self.is_visa_included else 0,
+            # "guide_fees":"{:,.2f}".format(self.guide_fees) if self.is_guide_included else 0,
+            # "guide_full_name":Guide.query.get(self.includes[0].fk_guide_id) if len(self.includes) > 0 and self.includes[0].fk_guide_id else "",
+            # "hotel_name":Hotel.query.get(self.includes[0].fk_hotel_id) if len(self.includes) > 0 and self.includes[0].fk_hotel_id else "",
+            # "plane_fees":"{:,.2f}".format(self.plane_fees) if self.is_plane_included else 0,
             "is_plane_included":"inclue" if self.is_plane_included else "exclu",
             "is_guide_included":"inclue" if self.is_guide_included else "exclu",
             "is_hotel_included":"inclue" if self.is_hotel_included else "exclu",
@@ -130,8 +142,9 @@ class Bus(db.Model):
             'id': self.id,
             'driver_full_name': self.driver_full_name,
             'capacity': self.capacity,
+            'state':self.state,
             'company': self.company,
-            'contacts': [contact.repr(['phone'])['phone'] for contact in self.contacts]
+            'contacts': [contact.repr(['phone']) for contact in self.contacts]
         }
         return {key: _dict[key] for key in columns} if columns else _dict
 
@@ -182,9 +195,9 @@ class Guide(db.Model):
     sex = db.Column(db.String(10))
     state = db.Column(db.String(100), nullable=True)
     contacts = db.relationship('Contact', backref="guide_contact", lazy='subquery')
-    trips = db.relationship('Trip', secondary="include",viewonly=True,
-                            primaryjoin="Guide.id == foreign(Include.fk_guide_id)",
-                            secondaryjoin="Trip.id == foreign(Include.fk_trip_id)")
+    trips = db.relationship('Trip', secondary="pickup",viewonly=True,
+                            primaryjoin="Guide.id == foreign(PickUp.fk_guide_id)",
+                            secondaryjoin="Trip.id == foreign(PickUp.fk_trip_id)")
 
     def __repr__(self):
         return f'{self.name}'
@@ -194,8 +207,11 @@ class Guide(db.Model):
             'id':self.id,
             'name': self.name,
             'sex': self.sex,
+            'state':self.state,
             '#trips': len(self.trips),
-            'trips':self.trips}
+            'trips':self.trips,
+            'contacts':[c.repr() for c in self.contacts]
+        }
         return {key: _dict[key] for key in columns} if columns else _dict
 
 
@@ -207,12 +223,14 @@ class Hotel(db.Model):
     contacts = db.relationship('Contact', backref="hotel_contact", lazy='subquery')
     star_rating = db.Column(db.Integer, default=0)
     state = db.Column(db.String(100))
-    # trips = db.relationship('Trip', secondary="include", viewonly=True,
-    #                           primaryjoin="Hotel.id == foreign(Include.fk_hotel_id)",
-    #                           secondaryjoin="Trip.id == foreign(Include.fk_trip_id)")
-    prices = db.relationship('RoomPrices', 
+    trips = db.relationship('Trip', secondary="room_price", viewonly=True,
+                              primaryjoin="Hotel.id == foreign(RoomPrice.fk_hotel_id)",
+                              secondaryjoin="and_(Trip.id == foreign(Booking.fk_trip_id), "
+                                            "RoomPrice.id == foreign(Booking.fk_price_id))")
+    prices = db.relationship('RoomPrice',
                              backref="hotel_room_prices", 
                              lazy="subquery")
+
 
     def __repr__(self):
         return f'{self.name}'
@@ -223,7 +241,7 @@ class Hotel(db.Model):
             'name': self.name,
             'is_deleted': self.is_deleted,
             'star_rating': self.star_rating,
-            "#trips":len(self.trips) if len(self.trips)>0 else "/",
+            "#trips":len(self.trips) if len(self.trips)>0 else 0,
             "trips":[v.repr() for v in self.trips],
             'contacts': [c.repr(['phone'])['phone'] for c in self.contacts]
         }
@@ -349,29 +367,59 @@ class RoomPrice(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     type = db.Column(db.String(10))
     price = db.Column(db.Double, default = 0)
-    hotel_id = db.Column(db.Integer, db.ForeignKey('hotel.id'))
+    fk_hotel_id = db.Column(db.Integer, db.ForeignKey('hotel.id'))
 
 
-class Subscription(db.Model):
-    __tablename__ = "subscription"
+class Booking(db.Model):
+    __tablename__ = "booking"
     id = db.Column(db.Integer, primary_key=True)
     fk_agency_id = db.Column(db.Integer, db.ForeignKey('agency.id')) # Client
     fk_trip_id = db.Column(db.Integer, db.ForeignKey('trip.id'))
     total_to_pay=db.Column(db.Double, default = 0)
     rest_to_pay=db.Column(db.Double, default = 0)
+    """
+    status: describes the status of the subscription cancellation process
+    two options:
+    * pending : Accountant does not review the pending cancellation yet',
+    * confirmed: Accountant accepted the cancellation
+    * rejected: Accountant rejected the cancellation
+    """
     status = db.Column(db.String(15), default = "")
+    """
+    Does the client pay all the booking fees
+    """
+    is_confirmed = db.Column(db.Boolean, default=False)
+
     refund = db.Column(db.Double, default = 0)
-    price_id  = db.Column(db.Integer, db.ForeignKey('room_price.id'))
+    fk_price_id  = db.Column(db.Integer, db.ForeignKey('room_price.id'))
 
 
-    def __repr__(self, columns=None):
+    def __repr__(self, query = None):
+        if query:
+            return f"Groupe= {Agency.query.get(self.fk_agency_id).label} , trip = {query.get(self.fk_trip_id).destination}"
         return f"Groupe= {Agency.query.get(self.fk_agency_id).label} , trip = {Trip.query.get(self.fk_trip_id).destination}"
 
-    def repr(self, columns_trip=None, columns_agency=None):
-        trip_dict = Trip.query.get(self.fk_trip_id).repr(columns_trip)
+    def repr(self, query = None, columns_booking=None, columns_trip=None, columns_agency=None):
+        if query:
+            trip_dict = query.filter_by(id = self.fk_trip_id).first().repr(columns_trip)
+        else:
+            trip_dict = Trip.query.filter_by(id = self.fk_trip_id).first().repr(columns_trip)
+
         group_dict = Agency.query.get(self.fk_agency_id).repr(columns_agency)
+
+        booking_dict = {
+            'cancellation_status': self.status,
+            'total_to_pay': self.total_to_pay,
+            'rest_to_pay': self.rest_to_pay,
+            'room_price': self.fk_price_id, # Room price
+            'refund':self.refund,
+            'confirmed':self.is_confirmed,
+        }
+        if columns_booking:
+            booking_dict = {**booking_dict, **columns_booking}
         group_dict.update(trip_dict)
-        return group_dict
+
+        return booking_dict.update(group_dict)
 
 
 class Entity(db.Model):
@@ -416,10 +464,10 @@ class PickUp(db.Model):
     x_coordinate = db.Column(db.Double, default = 0)
     y_coordinate = db.Column(db.Double, default = 0)
     map_url = db.Column(db.String(150), nullable = True)
-    bus_id = db.Column(db.Integer, db.ForeignKey('bus.id'))
-    guide_id = db.Column(db.Integer, db.ForeignKey('guide.id'))
-    departure_id = db.Column(db.Integer, db.ForeignKey('departure.id'))
-    trip_id = db.Column(db.Integer, db.ForeignKey('trip.id'))
+    fk_bus_id = db.Column(db.Integer, db.ForeignKey('bus.id'))
+    fk_guide_id = db.Column(db.Integer, db.ForeignKey('guide.id'))
+    fk_departure_id = db.Column(db.Integer, db.ForeignKey('departure.id'))
+    fk_trip_id = db.Column(db.Integer, db.ForeignKey('trip.id'))
 
     def to_dict(self):
         return dict(

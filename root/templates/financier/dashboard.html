@@ -1,10 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "layouts/base.html" %}
 
-</body>
-</html>
+{% block title %} Nomadix Dashboard - {% block subtitle %} {% endblock %} {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/mermaid.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/select2-bootstrap-5.min.css') }}">
+{% endblock stylesheets %}
+
+{% block sidebar %}
+
+    <div class="sidebar sidebar-dark sidebar-fixed" id="sidebar">
+      <div class="sidebar-brand d-none d-md-flex">
+        <svg class="sidebar-brand-full" width="118" height="46">
+          <use xlink:href="/static/assets/brand/coreui.svg#full"></use>
+        </svg>
+        <svg class="sidebar-brand-narrow" width="46" height="46">
+          <use xlink:href="/static/assets/brand/coreui.svg#signet"></use>
+        </svg>
+      </div>
+      <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('financial_bp.index') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-speedometer"></use>
+            </svg> Dashboard Nomadix</a></li>
+        <li class="nav-title">Fournisseurs</li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('financial_bp.buses') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+            </svg> Tous les bus</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('financial_bp.guides') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+            </svg> Tous les guides </a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('financial_bp.hotels') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+            </svg> Tous les hôtels </a></li>
+        <li class="nav-title">Voyages</li>
+        <li class="nav-group"><a class="nav-link" href="{{ url_for('financial_bp.trips') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+            </svg> Liste de voyages </a>
+        </li>
+{#          <li class="nav-group"><a class="nav-link" href="{{ url_for('financial_bp.bookings') }}">#}
+{#            <svg class="nav-icon">#}
+{#              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-list"></use>#}
+{#            </svg> Liste des reservations </a>#}
+{#            </li>#}
+
+          <li class="nav-title">finance</li>
+          <li class="nav-group"><a class="nav-link" href="{{ url_for('financial_bp.supplier_payments') }}">
+            <svg class="nav-icon">
+              <use xlink:href="/static/assets/vendors/@coreui/icons/svg/free.svg#cil-list"></use>
+            </svg> Factures et paiements </a>
+        </li>
+      </ul>
+    </div>
+
+{% endblock %}
+<div class="body flex-grow-1 px-3">
+    <div class="container-lg">
+        {% block content %}
+        {% endblock content %}
+    </div>
+</div>

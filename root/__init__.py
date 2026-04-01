@@ -19,18 +19,17 @@ phone_number_regex = re.compile('^[\+]?[(]?[0-9]{2}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[
 def create_app(config_name):
     app.config.from_object(configs[config_name])
 
-
-    from root.admin import admin_bp
-    app.register_blueprint(admin_bp, name="admin_bp")
+    # from root.admin import admin_bp
+    # app.register_blueprint(admin_bp, name="admin_bp")
 
     from root.gestionnaire import emp_bp
-    app.register_blueprint(emp_bp)
+    app.register_blueprint(emp_bp, name="emp_bp")
 
     from root.commercial import comm_bp
-    app.register_blueprint(comm_bp)
+    app.register_blueprint(comm_bp, name="comm_bp")
 
     from root.financier import financial_bp
-    app.register_blueprint(financial_bp)
+    app.register_blueprint(financial_bp, name="financial_bp")
 
     from root.auth import auth_bp
     app.register_blueprint(auth_bp, name="auth_bp")
@@ -42,7 +41,7 @@ def create_app(config_name):
     login_manager.login_message_category="info"
     login_manager.init_app(app)
     # The task scheduler
-    scheduler.init_app(app)
-    scheduler.start()
+    # scheduler.init_app(app)
+    # scheduler.start()
     
     return app

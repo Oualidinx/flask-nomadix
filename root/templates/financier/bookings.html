@@ -1,0 +1,172 @@
+{% extends "financier/dashboard.html" %}
+
+{% block stylesheets %}
+
+{% endblock %}
+
+{% block content %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category , message in messages %}
+                <div class="toast-container toast-container position-absolute p-3 bottom-0 start-0">
+                    <div class="toast align-items-center text-white bg-{{ category }}" role="alert"
+                         aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                {{ message }}
+                            </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+	<div class="card">
+        <div class="card-header">
+            <i class="fa fa-align-justify"></i> Tous les participant de voyage: {{ object['destination'] }}
+        </div>
+        <div class="card-body">
+{#            <div class="position-relative" style="z-index: 3;">#}
+{#                <div class="position-absolute top-0 end-0">#}
+{#                    <a role="button" href="{{ url_for('financial_bp.add_voyage') }}" class="btn btn-pill btn-outline-dark"><i class="c-icon c-icon-2xl mt-5 mb-2 cil-plus"></i> Nouveau</a>#}
+{#                </div>#}
+{#            </div>#}
+            <div id="table"></div>
+
+        </div>
+        <div class="row bg-danger">
+            <!-- Global modal container -->
+            <div id="modal-container"></div>
+{#            <div class="col-lg">#}
+{#               <div class="modal fade" id="voyageContent" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">#}
+{#                   <div class="modal-dialog">#}
+{#                       <div class="modal-content">#}
+{#                           <div class="modal-header">#}
+{#                               <h5 class="modal-title" id="voyageContent">Informations détaillées</h5>#}
+{#                               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>#}
+{#                           </div>#}
+{#                           <div class="modal-body"></div>#}
+{#                           <div class="modal-footer">#}
+{#                               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>#}
+{#                           </div>#}
+{#                       </div>#}
+{#                   </div>#}
+{#               </div>#}
+{#            </div>#}
+        </div>
+    </div>
+{% endblock %}
+{% block javascripts %}
+    <script>
+        function openModal(button) {
+            const url = button.dataset.modalUrl;
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    // Inject modal HTML into container
+                    document.getElementById('modal-container').innerHTML = data.html;
+
+                    // Show the modal (Bootstrap 5)
+                    const modal = new bootstrap.Modal(document.getElementById('dynamicModal'));
+                    modal.show();
+                })
+                .catch(err => console.error('Modal load error:', err));
+        }
+
+        new gridjs.Grid({
+            autoWidth:true,
+            fixedHeader:true,
+            style:{
+                table:{
+                    'width':"100%"
+                }
+            },
+            language:{
+                search: {
+                  placeholder: 'Recherche...',
+                },
+                sort: {
+                  sortAsc: 'Ordre croissant',
+                  sortDesc: 'Ordre décroissant',
+                },
+                pagination: {
+                  previous: 'Précédent',
+                  next: 'Suivant',
+                  navigate: (page, pages) => `Page ${page} of ${pages}`,
+                  page: (page) => `Page ${page}`,
+                  showing: 'Affichage..',
+                  of: 'de',
+                  to: 'à',
+                  results: 'résultats',
+                },
+                loading: 'Chargement...',
+                noRecordsFound: 'Aucun enregistrements',
+                error: 'Erreur pendant le chargement des données'},
+            columns: [
+                {#{ id: 'id', name: 'Num' },#}
+                { id: 'id_group', name: 'ID group' },
+                { id: 'title', name: 'Titre' },
+                { id: 'responsable', name: 'Responsable de groupe' },
+                { id: 'contact', name: 'Contact' },
+                { id: 'nb_places', name: 'Nombre de places' },
+                { id:'actions', name:'Actions'}
+            ],
+            data: ()=>{
+                return new Promise(resolve => {
+                    setTimeout(()=>
+                        resolve([
+                {% if object %}
+                    {% for b in object['agencies'] %}
+                        {
+                            id_group :'{{ b["code_group"] }}',
+                            title :'{{ b['label'] }}',
+                            nb_places :'{{ b['reserved_places'] }}',
+                            responsable :'{{ b['responsible_full_name'] }}',
+                            contact :'{{ b['contacts'] }}',
+                            {#status:gridjs.html(`#}
+{#                                    {% if b['subscription_status']!=None %}#}
+{#                                        <span class="badge rounded-pill" style="background-color: #A6001A;">Inscriptions fermées</span>#}
+{#                                    {% endif %}#}
+{#                                    {% if b['places_status']!=None %}#}
+{#                                        <span class="badge rounded-pill" style="background-color: #A6001A;">Nombre de places atteint la limite</span>#}
+{#                                    {% endif %}`),#}
+                            actions: gridjs.html(`<div class="btn-group">
+                                        <button id="user-info"
+                                            class="btn btn-sm btn-outline-info"
+                                            onclick="openModal(this)"
+                                            data-bs-toggle="tooltip"
+                                            data-modal-url="{{ url_for('financial_bp.get_booking', booking_id=b['id']) }}"
+                                            data-bs-placement="bottom" title="Voir">
+                                            info</button>
+                                        {#<a role="button" class="btn btn-sm btn-outline-danger"#}
+                                        {#    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer"#}
+                                        {#    href="{{ url_for('financial_bp.delete_voyage',voyage_id=b['id']) }}">#}
+                                        {#    <i class="cil-delete"></i>#}
+                                        {#</a>#}
+                                        {#<a role="button" class="btn btn-sm btn-outline-primary"#}
+                                        {#    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Inscriptions au voyage"#}
+                                        {#    href="{{ url_for('financial_bp.subscription',voyage_id=b['id']) }}">#}
+                                        {#    <i class="cil-people"></i>#}
+                                        {#</a>#}
+                                        {#<a class="btn btn-sm btn-outline-info" href="{{ url_for('financial_bp.print_trip', _id=b['id']) }}">#}
+                                        {#    Imprimer le récépissé#}
+                                        {#</a>#}
+                                  </div>`
+                            )
+                        },
+                    {% endfor %}
+                {% endif %}
+            ]),1000
+                    )
+                })
+            },
+            search: {
+              selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4, 5].includes(cellIndex) ? cell : null,
+            },
+            sort: true,
+            pagination: true
+          }).render(document.getElementById('table'));
+
+    </script>
+{% endblock %}

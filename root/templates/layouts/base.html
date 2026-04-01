@@ -12,8 +12,7 @@
 
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="theme-color" content="#ffffff">
-
-    <!-- Vendors styles-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendors/@coreui/icons/css/free.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendors/simplebar/css/simplebar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/vendors/simplebar.css') }}">
 
@@ -21,9 +20,9 @@
     <link href="{{ url_for('static', filename='assets/css/style.css') }}" rel="stylesheet">
 
     <!-- We use those styles to show code examples, you should remove them in your application.-->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/prism.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/prism.css') }}">
     <link href="{{ url_for('static', filename='assets/css/examples.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='gridjs/dist/theme/mermaid.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='gridjs/theme/mermaid.min.css') }}" rel="stylesheet">
     <!-- Specific Page CSS goes HERE  -->
     {% block stylesheets %}{% endblock stylesheets %}
 
@@ -48,8 +47,12 @@
         <!-- Plugins and scripts required by this view-->
         <script src="{{ url_for('static', filename='js/main.js') }}"></script>
         <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/toasts.js') }}"></script>
         <script src="{{ url_for('static', filename='gridjs/dist/gridjs.production.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/popper.min.js')}}"></script>
+        <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js')}}"></script>
+{#    	<script src="{{ url_for('static', filename='js/toasts.js')}}"></script>#}
+{#        <script src="{{ url_for('static', filename='js/tooltips.js')}}"></script>#}
+{#        <script src="{{ url_for('static', filename='js/widgets.js')}}"></script>#}
         <script type="text/javascript">
             $(document).ready(function (){
                 $('.toast').toast('show');
