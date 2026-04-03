@@ -36,6 +36,8 @@ pydyf
 PyJWT
 PyMySQL
 pyphen
+pytest
+pytest-flask
 python-dotenv
 redmail
 six

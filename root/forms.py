@@ -322,14 +322,31 @@ class PaymentForm(FlaskForm):
 
 class ConfigForm(FlaskForm):
     benefice = DecimalField("Bénéfice (%):",places=2, rounding=None,
-                            validators=[InputRequired(),
-                                        NumberRange(min=1)])
+                            validators=[DataRequired(),
+                                        NumberRange(min=1, max=100)])
     supplier_payment_period = IntegerField("Rappel pour paiement fournisseur avant la date limite (jours)",
-                                           validators=[InputRequired(),
+                                           validators=[DataRequired(),
                                                        NumberRange(min=1,
                                                                    message="La valeur doit être au moins 1 jour")])  # days
     balance_reminder = IntegerField("Rappel de solde avant échéance (jours)",
-                                        validators=[InputRequired(),
+                                        validators=[DataRequired(),
                                                     NumberRange(min=1,
                                                                 message="La valeur doit être au moins 1 jour")]) # days
-    sumit = SubmitField("Enregistrer")
+    submit = SubmitField("Enregistrer")
+
+    def validate_benefice(self, benefice):
+        if benefice.data < 0:
+            raise ValidationError('La valeur ne dois pas être négative')
+    
+        if benefice.data>100:
+            raise ValidationError('La valeur ne dois pas être supérieure  à 100')
+    
+    def validate_supplier_payment_period(self, supplier_payment_period):
+
+        if supplier_payment_period.data<0:
+            raise ValidationError('La valeur ne doit pas être inférieure à 0')
+        
+
+    def validate_balance_reminder(self, balance_reminder):
+        if balance_reminder.data<0:
+            raise ValidationError('La valeur ne doit pas être inférieure à 0')

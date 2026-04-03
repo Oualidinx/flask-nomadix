@@ -1,6 +1,5 @@
 from root import database as db
-from flask_login import UserMixin
-from flask_login import current_user
+from flask_login import UserMixin, current_user
 from datetime import datetime
 import json
 
