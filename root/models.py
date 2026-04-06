@@ -16,9 +16,11 @@ class Config(db.Model):
     __tablename__ = "config"
     id = db.Column(db.Integer, primary_key=True)
     benefice = db.Column(db.Float, nullable=False)
-    supplier_payment_period=db.Column(db.Float, default = 15) # days
-    balance_reminder = db.Column(db.Float, default = 7) # days
+    supplier_payment_notification=db.Column(db.Float, default = 15) # days
     cancellation_fee = db.Column(db.Float, default = 0)
+    """purchase_due_days: Days used to calculate the deadline of client payment"""
+    purchase_due_days = db.Column(db.Integer, nullable=False)
+    purchase_balance_reminder = db.Column(db.Float, default=7)  # days
 
 
 class User(UserMixin, db.Model):
@@ -286,11 +288,15 @@ class Invoice(db.Model):
     code = db.Column(db.String(100))
     date = db.Column(db.DateTime, default=datetime.utcnow)
     amount = db.Column(db.Integer)
+    expiry_date = db.Column(db.Date, nullable = False)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     payments = db.relationship('Payment', backref='payments_invoice', lazy='subquery')
     # fk_trip_id = db.Column(db.Integer, db.ForeignKey('trip.id'))
     fk_agency_id = db.Column(db.Integer, db.ForeignKey('agency.id'))
     invoice_type = db.Column(db.String(100))
+    fk_bus_id = db.Column(db.Integer, db.ForeignKey('bus.id'))
+    fk_hotel_id = db.Column(db.Integer, db.ForeignKey('hotel.id'))
+
     entities = db.relationship('Entity', backref='invoice_entities', lazy='subquery')
 
     def __repr__(self):

@@ -11,13 +11,13 @@ from flask import session
 
 @financial_bp.route('/')
 @financial_bp.route('/dashboard')
-# @login_required
+@login_required
 def index():
     return render_template("financier/dashboard.html")
 
 
 @financial_bp.get('/hotels')
-# @login_required
+@login_required
 def hotels():
     session['endpoint'] = 'suppliers'
     _hotels = Hotel.query.filter_by(is_deleted=False).all()
@@ -33,7 +33,7 @@ def hotels():
 
 
 @financial_bp.get('/hotels/<int:hotel_id>')
-# @login_required
+@login_required
 def hotel_detail(hotel_id):
     hotel = Hotel.query.get(hotel_id)
     if not hotel:
@@ -42,7 +42,7 @@ def hotel_detail(hotel_id):
 
 
 @financial_bp.get('/buses')
-# @login_required
+@login_required
 def buses():
     session['endpoint'] = 'suppliers'
     _buses = Bus.query.filter_by(is_deleted=False).all()
@@ -61,7 +61,7 @@ def buses():
 
 
 @financial_bp.get('/guides')
-# @login_required
+@login_required
 def guides():
     session['endpoint'] = 'suppliers'
     _guide = Guide.query.filter_by(is_deleted=False).all()
@@ -79,7 +79,7 @@ def guides():
 
 @financial_bp.get('/hotels/new')
 @financial_bp.post('hotels/new')
-# @login_required
+@login_required
 def add_hotel():
     session['endpoint']="suppliers"
     form : HotelForm= HotelForm()
@@ -103,7 +103,7 @@ def add_hotel():
 
 @financial_bp.get('/buses/new')
 @financial_bp.post('buses/new')
-# @login_required
+@login_required
 def add_bus():
     session['endpoint']="suppliers"
     form : BusForm= BusForm()
@@ -130,7 +130,7 @@ def add_bus():
 import os
 @financial_bp.get('/guides/new')
 @financial_bp.post('/guides/new')
-# @login_required
+@login_required
 def add_guide():
     session['endpoint']="suppliers"
     form : GuideForm = GuideForm()
@@ -162,14 +162,14 @@ def add_guide():
 
 
 @financial_bp.get('/bookings/decline_requests')
-# @login_required
+@login_required
 def decline_requests():
     return redirect(url_for("financier_bp.trips"))
 
 
 from root.models import Booking
 @financial_bp.get('/bookings/<int:booking_id>/decline/confirm')
-# @login_required
+@login_required
 def decline_booking(booking_id):
     session['endpoint'] = "bookings"
     booking = Booking.query.get(booking_id)
@@ -190,14 +190,14 @@ def decline_booking(booking_id):
 # Valider une annulation
 @financial_bp.get('/supplier/payment')
 @financial_bp.post('/supplier/payment')
-# @login_required
+@login_required
 def supplier_payments():
     session['endpoint'] = "suppliers"
     return render_template("financier/payments.html")
 
 
 @financial_bp.get('/trips/bookings/<int:trip_id>/<string:q>')
-# @login_required
+@login_required
 def bookings(trip_id, q=None):
     session['endpoint'] = 'bookings'
     if not trip_id:
@@ -250,7 +250,7 @@ def bookings(trip_id, q=None):
 
 
 @financial_bp.get('/bookings/<int:booking_id>')
-# @login_required
+@login_required
 def get_booking(booking_id):
     """
     Display a modal that contains all information about such a booking object
@@ -268,14 +268,14 @@ def get_booking(booking_id):
     return jsonify({'html': html})
 
 @financial_bp.get('/invoices')
-# @login_required
+@login_required
 def invoices():
     session['endpoint'] = 'suppliers'
     pass
 
 
 @financial_bp.get('/clients')
-# @login_required
+@login_required
 def clients():
     session['endpoint'] = 'bookings'
     liste = Agency.query.filter_by(is_deleted = False).all()
@@ -287,7 +287,7 @@ def clients():
 
 @financial_bp.get('/config/edit')
 @financial_bp.post('/config/edit')
-# @login_required
+@login_required
 def edit_config():
     form : ConfigForm = ConfigForm()
     config : Config = Config.query.get(1)
@@ -306,7 +306,7 @@ def edit_config():
 
 
 @financial_bp.get('/buses/<int:bus_id>/delete')
-# @login_required
+@login_required
 def delete_bus(bus_id):
     bus = Bus.query.filter_by(is_deleted=False).filter_by(id=bus_id).first()
     if not bus:
@@ -325,7 +325,7 @@ def delete_bus(bus_id):
     return redirect(url_for("financial_bp.buses"))
 
 @financial_bp.get('/guides/<int:guide_id>/delete')
-# @login_required
+@login_required
 def delete_guide(guide_id):
     guide = Guide.query.filter_by(is_deleted=False).filter_by(id=guide_id).first()
     if not guide:
@@ -341,7 +341,7 @@ def delete_guide(guide_id):
 
 
 @financial_bp.get('/hotels/<int:hotel_id>/delete')
-# @login_required
+@login_required
 def delete_hotel(hotel_id):
     hotel = Hotel.query.filter_by(is_deleted=False).filter_by(id=hotel_id).first()
     if not hotel:
@@ -357,7 +357,7 @@ def delete_hotel(hotel_id):
 
 
 @financial_bp.get('/trips')
-# @login_required
+@login_required
 def trips():
     _trips = Trip.query.filter_by(is_deleted=False).all()
     liste = list()
@@ -374,7 +374,7 @@ def trips():
 
 
 @financial_bp.get('/buses/<int:bus_id>/view')
-# @login_required
+@login_required
 def get_bus(bus_id):
     session['endpoint'] = 'buses'
 
@@ -404,7 +404,7 @@ def get_bus(bus_id):
 
 
 @financial_bp.get('/guides/<int:guide_id>/view')
-# @login_required
+@login_required
 def get_guide(guide_id):
     session['endpoint'] = 'suppliers'
 
@@ -425,7 +425,7 @@ def get_guide(guide_id):
 
 
 @financial_bp.get('/hotels/<int:hotel_id>/view')
-# @login_required
+@login_required
 def get_hotel(hotel_id):
     print('called')
     session['endpoint'] = 'hotels'
@@ -480,7 +480,7 @@ def get_trip():
 
 
 @financial_bp.post('/trips/<int:trip_id>/delete')
-# @login_required
+@login_required
 def delete_trip(trip_id):
     trip = Trip.query.get(trip_id)
     if not trip:

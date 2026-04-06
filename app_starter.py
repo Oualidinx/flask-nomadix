@@ -68,8 +68,6 @@ def make_shell_context():
     return dict(app=app,
                 db=database
                 )
-
-
 @app.route('/')
 def index():
     return redirect(url_for("auth_bp.login"))
